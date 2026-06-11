@@ -1,0 +1,296 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}|src\\Customer\\Domain\\Customer.Domain.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\customer\\domain\\valueobjects\\address.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}|src\\Customer\\Domain\\Customer.Domain.csproj|solutionrelative:src\\customer\\domain\\valueobjects\\address.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}|src\\Customer\\Domain\\Customer.Domain.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\customer\\domain\\valueobjects\\phone.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}|src\\Customer\\Domain\\Customer.Domain.csproj|solutionrelative:src\\customer\\domain\\valueobjects\\phone.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}|src\\Customer\\Domain\\Customer.Domain.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\customer\\domain\\valueobjects\\email.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}|src\\Customer\\Domain\\Customer.Domain.csproj|solutionrelative:src\\customer\\domain\\valueobjects\\email.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CBD5B3FD-8151-4AC4-B5F0-15E78D18139B}|src\\Customer\\Infrastructure\\Customer.Infrastructure.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\customer\\infrastructure\\persistence\\configurations\\customerconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CBD5B3FD-8151-4AC4-B5F0-15E78D18139B}|src\\Customer\\Infrastructure\\Customer.Infrastructure.csproj|solutionrelative:src\\customer\\infrastructure\\persistence\\configurations\\customerconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CBD5B3FD-8151-4AC4-B5F0-15E78D18139B}|src\\Customer\\Infrastructure\\Customer.Infrastructure.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\customer\\infrastructure\\repositories\\customerrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CBD5B3FD-8151-4AC4-B5F0-15E78D18139B}|src\\Customer\\Infrastructure\\Customer.Infrastructure.csproj|solutionrelative:src\\customer\\infrastructure\\repositories\\customerrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67E5639E-60FC-40CE-8941-0066DE0F4EFC}|src\\Notification\\Api\\Notification.Api.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\notification\\api\\notification.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{67E5639E-60FC-40CE-8941-0066DE0F4EFC}|src\\Notification\\Api\\Notification.Api.csproj|solutionrelative:src\\notification\\api\\notification.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{578F575E-5639-4F4E-B195-15FC880494CB}|src\\Product\\Api\\Product.Api.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\product\\api\\product.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{578F575E-5639-4F4E-B195-15FC880494CB}|src\\Product\\Api\\Product.Api.csproj|solutionrelative:src\\product\\api\\product.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CD78CFFB-B5AB-4AA6-8365-E060257E6186}|src\\Customer\\Api\\Customer.Api.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\customer\\api\\customer.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{CD78CFFB-B5AB-4AA6-8365-E060257E6186}|src\\Customer\\Api\\Customer.Api.csproj|solutionrelative:src\\customer\\api\\customer.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4E659D61-696B-45EA-8E52-28CA8389F751}|src\\Order\\Api\\Order.Api.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\order\\api\\order.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{4E659D61-696B-45EA-8E52-28CA8389F751}|src\\Order\\Api\\Order.Api.csproj|solutionrelative:src\\order\\api\\order.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4E659D61-696B-45EA-8E52-28CA8389F751}|src\\Order\\Api\\Order.Api.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\order\\api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4E659D61-696B-45EA-8E52-28CA8389F751}|src\\Order\\Api\\Order.Api.csproj|solutionrelative:src\\order\\api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8DFDB670-E97A-409A-9681-D458CA89BFD7}|src\\Product\\Infrastructure\\Product.Infrastructure.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\product\\infrastructure\\outbox\\outboxmessage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8DFDB670-E97A-409A-9681-D458CA89BFD7}|src\\Product\\Infrastructure\\Product.Infrastructure.csproj|solutionrelative:src\\product\\infrastructure\\outbox\\outboxmessage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{662AC292-56BB-4CF8-9FCB-930A958F7FC9}|src\\Product\\Domain\\Product.Domain.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\product\\domain\\valueobjects\\money.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{662AC292-56BB-4CF8-9FCB-930A958F7FC9}|src\\Product\\Domain\\Product.Domain.csproj|solutionrelative:src\\product\\domain\\valueobjects\\money.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{662AC292-56BB-4CF8-9FCB-930A958F7FC9}|src\\Product\\Domain\\Product.Domain.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\product\\domain\\repositories\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{662AC292-56BB-4CF8-9FCB-930A958F7FC9}|src\\Product\\Domain\\Product.Domain.csproj|solutionrelative:src\\product\\domain\\repositories\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{662AC292-56BB-4CF8-9FCB-930A958F7FC9}|src\\Product\\Domain\\Product.Domain.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\product\\domain\\repositories\\iproductrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{662AC292-56BB-4CF8-9FCB-930A958F7FC9}|src\\Product\\Domain\\Product.Domain.csproj|solutionrelative:src\\product\\domain\\repositories\\iproductrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{662AC292-56BB-4CF8-9FCB-930A958F7FC9}|src\\Product\\Domain\\Product.Domain.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\product\\domain\\primitives\\idomainevent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{662AC292-56BB-4CF8-9FCB-930A958F7FC9}|src\\Product\\Domain\\Product.Domain.csproj|solutionrelative:src\\product\\domain\\primitives\\idomainevent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}|src\\Customer\\Domain\\Customer.Domain.csproj|c:\\users\\paulo\\downloads\\ecommerce-microservices\\ecommerce-ms\\src\\customer\\domain\\entities\\customerss.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}|src\\Customer\\Domain\\Customer.Domain.csproj|solutionrelative:src\\customer\\domain\\entities\\customerss.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 87,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:1:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Address.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Domain\\ValueObjects\\Address.cs",
+              "RelativeDocumentMoniker": "src\\Customer\\Domain\\ValueObjects\\Address.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Domain\\ValueObjects\\Address.cs",
+              "RelativeToolTip": "src\\Customer\\Domain\\ValueObjects\\Address.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-11T02:05:22.465Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Phone.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Domain\\ValueObjects\\Phone.cs",
+              "RelativeDocumentMoniker": "src\\Customer\\Domain\\ValueObjects\\Phone.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Domain\\ValueObjects\\Phone.cs",
+              "RelativeToolTip": "src\\Customer\\Domain\\ValueObjects\\Phone.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-11T02:04:48.191Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Email.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Domain\\ValueObjects\\Email.cs",
+              "RelativeDocumentMoniker": "src\\Customer\\Domain\\ValueObjects\\Email.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Domain\\ValueObjects\\Email.cs",
+              "RelativeToolTip": "src\\Customer\\Domain\\ValueObjects\\Email.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-11T02:03:13.728Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "CustomerConfiguration.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Infrastructure\\Persistence\\Configurations\\CustomerConfiguration.cs",
+              "RelativeDocumentMoniker": "src\\Customer\\Infrastructure\\Persistence\\Configurations\\CustomerConfiguration.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Infrastructure\\Persistence\\Configurations\\CustomerConfiguration.cs",
+              "RelativeToolTip": "src\\Customer\\Infrastructure\\Persistence\\Configurations\\CustomerConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-11T02:02:52.593Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "CustomerRepository.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Infrastructure\\Repositories\\CustomerRepository.cs",
+              "RelativeDocumentMoniker": "src\\Customer\\Infrastructure\\Repositories\\CustomerRepository.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Infrastructure\\Repositories\\CustomerRepository.cs",
+              "RelativeToolTip": "src\\Customer\\Infrastructure\\Repositories\\CustomerRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAABaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-11T02:02:34.577Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Notification.Api",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Notification\\Api\\Notification.Api.csproj",
+              "RelativeDocumentMoniker": "src\\Notification\\Api\\Notification.Api.csproj",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Notification\\Api\\Notification.Api.csproj",
+              "RelativeToolTip": "src\\Notification\\Api\\Notification.Api.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAABGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-06-11T02:01:19.853Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Product.Api",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Api\\Product.Api.csproj",
+              "RelativeDocumentMoniker": "src\\Product\\Api\\Product.Api.csproj",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Api\\Product.Api.csproj",
+              "RelativeToolTip": "src\\Product\\Api\\Product.Api.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAABGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-06-11T02:01:10.469Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Order\\Api\\Program.cs",
+              "RelativeDocumentMoniker": "src\\Order\\Api\\Program.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Order\\Api\\Program.cs",
+              "RelativeToolTip": "src\\Order\\Api\\Program.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-11T01:59:28.571Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Customer.Api",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Api\\Customer.Api.csproj",
+              "RelativeDocumentMoniker": "src\\Customer\\Api\\Customer.Api.csproj",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Api\\Customer.Api.csproj",
+              "RelativeToolTip": "src\\Customer\\Api\\Customer.Api.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAABFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-06-11T01:44:25.787Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Order.Api",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Order\\Api\\Order.Api.csproj",
+              "RelativeDocumentMoniker": "src\\Order\\Api\\Order.Api.csproj",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Order\\Api\\Order.Api.csproj",
+              "RelativeToolTip": "src\\Order\\Api\\Order.Api.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAABEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-06-11T01:22:46.184Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "OutboxMessage.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Infrastructure\\Outbox\\OutboxMessage.cs",
+              "RelativeDocumentMoniker": "src\\Product\\Infrastructure\\Outbox\\OutboxMessage.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Infrastructure\\Outbox\\OutboxMessage.cs",
+              "RelativeToolTip": "src\\Product\\Infrastructure\\Outbox\\OutboxMessage.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-09T23:45:35.488Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Money.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Domain\\ValueObjects\\Money.cs",
+              "RelativeDocumentMoniker": "src\\Product\\Domain\\ValueObjects\\Money.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Domain\\ValueObjects\\Money.cs",
+              "RelativeToolTip": "src\\Product\\Domain\\ValueObjects\\Money.cs",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAkwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-09T23:45:27.672Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "IUnitOfWork.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Domain\\Repositories\\IUnitOfWork.cs",
+              "RelativeDocumentMoniker": "src\\Product\\Domain\\Repositories\\IUnitOfWork.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Domain\\Repositories\\IUnitOfWork.cs",
+              "RelativeToolTip": "src\\Product\\Domain\\Repositories\\IUnitOfWork.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-09T23:45:22.366Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "IProductRepository.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Domain\\Repositories\\IProductRepository.cs",
+              "RelativeDocumentMoniker": "src\\Product\\Domain\\Repositories\\IProductRepository.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Domain\\Repositories\\IProductRepository.cs",
+              "RelativeToolTip": "src\\Product\\Domain\\Repositories\\IProductRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAABKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-09T23:45:07.76Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "IDomainEvent.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Domain\\Primitives\\IDomainEvent.cs",
+              "RelativeDocumentMoniker": "src\\Product\\Domain\\Primitives\\IDomainEvent.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Product\\Domain\\Primitives\\IDomainEvent.cs",
+              "RelativeToolTip": "src\\Product\\Domain\\Primitives\\IDomainEvent.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-09T23:44:57.396Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "Customerss.cs",
+              "DocumentMoniker": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Domain\\Entities\\Customerss.cs",
+              "RelativeDocumentMoniker": "src\\Customer\\Domain\\Entities\\Customerss.cs",
+              "ToolTip": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Customer\\Domain\\Entities\\Customerss.cs",
+              "RelativeToolTip": "src\\Customer\\Domain\\Entities\\Customerss.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-09T23:23:30.241Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

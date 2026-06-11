@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "5kMbH7Ic05s=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\paulo\\Downloads\\ecommerce-microservices\\ecommerce-ms\\src\\Order\\Domain\\Order.Domain.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\paulo\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\9.0.14\\microsoft.windowsdesktop.app.ref.9.0.14.nupkg.sha512",
+    "C:\\Users\\paulo\\.nuget\\packages\\microsoft.netcore.app.ref\\9.0.14\\microsoft.netcore.app.ref.9.0.14.nupkg.sha512",
+    "C:\\Users\\paulo\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\9.0.14\\microsoft.aspnetcore.app.ref.9.0.14.nupkg.sha512"
+  ],
+  "logs": []
+}

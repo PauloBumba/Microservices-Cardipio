@@ -1,0 +1,15 @@
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\bin\Debug\net9.0\Customer.Application.deps.json
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\bin\Debug\net9.0\Customer.Application.dll
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\bin\Debug\net9.0\Customer.Application.pdb
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\bin\Debug\net9.0\Customer.Domain.dll
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\bin\Debug\net9.0\Customer.Domain.pdb
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\Customer.Application.csproj.AssemblyReference.cache
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\Customer.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\Customer.Application.AssemblyInfoInputs.cache
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\Customer.Application.AssemblyInfo.cs
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\Customer.Application.csproj.CoreCompileInputs.cache
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\Customer.D662BFEF.Up2Date
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\Customer.Application.dll
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\refint\Customer.Application.dll
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\Customer.Application.pdb
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Application\obj\Debug\net9.0\ref\Customer.Application.dll

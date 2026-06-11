@@ -1,0 +1,155 @@
+name: ecommerce-ms
+
+services:
+
+  # ─── Databases ──────────────────────────────────────────────────────────────
+  customers-db:
+    image: postgres:16-alpine
+    container_name: customers-db
+    environment: { POSTGRES_DB: customers_db, POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres123 }
+    ports: ["5432:5432"]
+    volumes: [customers_data:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL","pg_isready -U postgres"], interval: 10s, retries: 5 }
+
+  products-db:
+    image: postgres:16-alpine
+    container_name: products-db
+    environment: { POSTGRES_DB: products_db, POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres123 }
+    ports: ["5435:5432"]
+    volumes: [products_data:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL","pg_isready -U postgres"], interval: 10s, retries: 5 }
+
+  orders-db:
+    image: postgres:16-alpine
+    container_name: orders-db
+    environment: { POSTGRES_DB: orders_db, POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres123 }
+    ports: ["5434:5432"]
+    volumes: [orders_data:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL","pg_isready -U postgres"], interval: 10s, retries: 5 }
+
+  notifications-db:
+    image: postgres:16-alpine
+    container_name: notifications-db
+    environment: { POSTGRES_DB: notifications_db, POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres123 }
+    ports: ["5436:5432"]
+    volumes: [notifications_data:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL","pg_isready -U postgres"], interval: 10s, retries: 5 }
+
+  # ─── Infrastructure ──────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports: ["6379:6379"]
+    healthcheck: { test: ["CMD","redis-cli","ping"], interval: 10s, retries: 5 }
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    environment: { RABBITMQ_DEFAULT_USER: rabbit, RABBITMQ_DEFAULT_PASS: rabbit123 }
+    ports: ["5672:5672", "15672:15672"]
+    volumes: [rabbitmq_data:/var/lib/rabbitmq]
+    healthcheck: { test: ["CMD","rabbitmq-diagnostics","ping"], interval: 15s, retries: 5 }
+
+  # ─── Observability ────────────────────────────────────────────────────────────
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment: { COLLECTOR_OTLP_ENABLED: "true" }
+    ports: ["16686:16686", "4317:4317", "4318:4318"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes: ["./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment: { GF_SECURITY_ADMIN_PASSWORD: admin123 }
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning"
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+
+  # ─── Microservices ────────────────────────────────────────────────────────────
+  customer-service:
+    build: { context: ., dockerfile: src/Customer/Api/Dockerfile }
+    container_name: customer-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=customers-db;Port=5432;Database=customers_db;Username=postgres;Password=postgres123
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Username: rabbit
+      RabbitMQ__Password: rabbit123
+      Jaeger__Endpoint: http://jaeger:4317
+    ports: ["5001:8080"]
+    depends_on:
+      customers-db: { condition: service_healthy }
+      rabbitmq:     { condition: service_healthy }
+    restart: unless-stopped
+
+  product-service:
+    build: { context: ., dockerfile: src/Product/Api/Dockerfile }
+    container_name: product-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=products-db;Port=5432;Database=products_db;Username=postgres;Password=postgres123
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Username: rabbit
+      RabbitMQ__Password: rabbit123
+      Redis__ConnectionString: redis:6379
+      Jaeger__Endpoint: http://jaeger:4317
+    ports: ["5002:8080"]
+    depends_on:
+      products-db: { condition: service_healthy }
+      rabbitmq:    { condition: service_healthy }
+      redis:       { condition: service_healthy }
+    restart: unless-stopped
+
+  order-service:
+    build: { context: ., dockerfile: src/Order/Api/Dockerfile }
+    container_name: order-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=orders-db;Port=5432;Database=orders_db;Username=postgres;Password=postgres123
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Username: rabbit
+      RabbitMQ__Password: rabbit123
+      ProductService__BaseUrl: http://product-service:8080
+      Jaeger__Endpoint: http://jaeger:4317
+    ports: ["5003:8080"]
+    depends_on:
+      orders-db:       { condition: service_healthy }
+      rabbitmq:        { condition: service_healthy }
+      product-service: { condition: service_started }
+    restart: unless-stopped
+
+  notification-service:
+    build: { context: ., dockerfile: src/Notification/Api/Dockerfile }
+    container_name: notification-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=notifications-db;Port=5432;Database=notifications_db;Username=postgres;Password=postgres123
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Username: rabbit
+      RabbitMQ__Password: rabbit123
+      Jaeger__Endpoint: http://jaeger:4317
+    ports: ["5004:8080"]
+    depends_on:
+      notifications-db: { condition: service_healthy }
+      rabbitmq:         { condition: service_healthy }
+    restart: unless-stopped
+
+volumes:
+  customers_data:
+  products_data:
+  orders_data:
+  notifications_data:
+  rabbitmq_data:
+  grafana_data:

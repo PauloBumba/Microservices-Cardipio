@@ -1,0 +1,11 @@
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\bin\Debug\net9.0\Customer.Domain.deps.json
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\bin\Debug\net9.0\Customer.Domain.dll
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\bin\Debug\net9.0\Customer.Domain.pdb
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\obj\Debug\net9.0\Customer.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\obj\Debug\net9.0\Customer.Domain.AssemblyInfoInputs.cache
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\obj\Debug\net9.0\Customer.Domain.AssemblyInfo.cs
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\obj\Debug\net9.0\Customer.Domain.csproj.CoreCompileInputs.cache
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\obj\Debug\net9.0\Customer.Domain.dll
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\obj\Debug\net9.0\refint\Customer.Domain.dll
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\obj\Debug\net9.0\Customer.Domain.pdb
+C:\Users\paulo\Downloads\ecommerce-microservices\ecommerce-ms\src\Customer\Domain\obj\Debug\net9.0\ref\Customer.Domain.dll
