@@ -20,10 +20,8 @@ builder.Services.AddOpenTelemetry()
         .AddAspNetCoreInstrumentation().AddSource("MassTransit")
         .AddOtlpExporter(o => o.Endpoint = new Uri(builder.Configuration["Jaeger:Endpoint"] ?? "http://jaeger:4317")));
 builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "postgres")
-    .AddRabbitMQ(rabbitConnectionString:
-        $"amqp://{builder.Configuration["RabbitMQ:Username"]}:{builder.Configuration["RabbitMQ:Password"]}@{builder.Configuration["RabbitMQ:Host"]}",
-        name: "rabbitmq");
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "postgres");
+   
 var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
     await scope.ServiceProvider.GetRequiredService<NotificationDbContext>().Database.MigrateAsync();
