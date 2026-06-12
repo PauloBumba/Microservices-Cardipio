@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Reference/Notification.Reference.csproj" />
+    <ProjectReference Include="../Domain/Notification.Domain.csproj" />
+    <ProjectReference Include="../Application/Notification.Application.csproj" />
+  </ItemGroup>
+</Project>

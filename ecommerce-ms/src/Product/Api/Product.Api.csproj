@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Product.Api</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Reference/Product.Reference.csproj" />
+    <ProjectReference Include="../Application/Product.Application.csproj" />
+    <ProjectReference Include="../Infrastructure/Product.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

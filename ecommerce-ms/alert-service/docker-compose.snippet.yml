@@ -1,0 +1,68 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ADICIONE estes blocos ao docker-compose.yml principal
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Alert Service ─────────────────────────────────────────────────────────
+  alert-service:
+    build:
+      context: ./alert-service
+      dockerfile: Dockerfile
+    container_name: alert-service
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+
+      # Webhook secret (mesmo valor do grafana-alerts.yaml)
+      Webhook__Secret: TROQUE_POR_UM_TOKEN_SEGURO
+
+      # ── Telegram ────────────────────────────────────────────────────────────
+      Channels__Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
+      Channels__Telegram__ChatId: ${TELEGRAM_CHAT_ID}
+
+      # ── WhatsApp (Evolution API) ─────────────────────────────────────────
+      Channels__WhatsApp__Provider: evolution
+      Channels__WhatsApp__EvolutionBaseUrl: http://evolution-api:8080
+      Channels__WhatsApp__EvolutionApiKey: ${EVOLUTION_API_KEY}
+      Channels__WhatsApp__EvolutionInstance: cardipio
+      Channels__WhatsApp__Numbers: ${WHATSAPP_NUMBERS}
+
+      # ── Email ────────────────────────────────────────────────────────────
+      Channels__Email__SmtpHost: smtp.gmail.com
+      Channels__Email__SmtpPort: 587
+      Channels__Email__Username: ${EMAIL_USERNAME}
+      Channels__Email__Password: ${EMAIL_PASSWORD}
+      Channels__Email__FromAddress: ${EMAIL_USERNAME}
+      Channels__Email__ToAddresses: ${EMAIL_TO_ADDRESSES}
+
+    ports: ["5005:8080"]
+    restart: unless-stopped
+
+  # ── Evolution API (WhatsApp) ─────────────────────────────────────────────
+  # Só precisa se usar WhatsApp via Evolution API
+  # Se usar Z-API, remova este bloco — Z-API é cloud, não precisa de container
+  evolution-api:
+    image: atendai/evolution-api:latest
+    container_name: evolution-api
+    environment:
+      SERVER_URL: http://evolution-api:8080
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      DATABASE_ENABLED: "false"
+      REDIS_ENABLED: "true"
+      REDIS_URI: redis://redis:6379
+      REDIS_PREFIX_KEY: evolution
+    ports: ["8081:8080"]
+    depends_on:
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAMBÉM atualize o bloco do grafana para montar o arquivo de alertas:
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#  grafana:
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning"
+#      - "./alert-service/grafana-alerts.yaml:/etc/grafana/provisioning/alerting/alerts.yaml"  # <- ADD

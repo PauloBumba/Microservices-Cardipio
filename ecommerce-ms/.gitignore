@@ -1,0 +1,14 @@
+# Visual Studio
+.vs/
+
+# Build
+bin/
+obj/
+
+# Logs
+*.log
+
+# Arquivos temporários e zip
+*.zip
+*.txt
+*.cache
