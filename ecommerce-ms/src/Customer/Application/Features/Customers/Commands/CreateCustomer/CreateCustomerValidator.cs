@@ -5,7 +5,15 @@ public sealed class CreateCustomerValidator : AbstractValidator<CreateCustomerCo
     public CreateCustomerValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Email).NotEmpty().EmailAddress().WithMessage("E-mail inválido.");
+        RuleFor(x => x.Email)
+    .NotEmpty()
+    .EmailAddress()
+    .Must(email =>
+    {
+        var parts = email.Split('@');
+        return parts.Length == 2 && parts[1].Contains('.');
+    })
+    .WithMessage("E-mail inválido.");
         RuleFor(x => x.Phone).NotEmpty().Matches(@"^\+?[\d\s\-\(\)]{8,20}$").WithMessage("Telefone inválido.");
         RuleFor(x => x.Street).NotEmpty().MaximumLength(300);
         RuleFor(x => x.City).NotEmpty().MaximumLength(100);
