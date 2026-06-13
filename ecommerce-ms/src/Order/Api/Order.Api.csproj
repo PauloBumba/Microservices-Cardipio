@@ -6,6 +6,7 @@
     <RootNamespace>Order.Api</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4"/>
     <ProjectReference Include="../Reference/Order.Reference.csproj" />
     <ProjectReference Include="../Application/Order.Application.csproj" />
     <ProjectReference Include="../Infrastructure/Order.Infrastructure.csproj" />

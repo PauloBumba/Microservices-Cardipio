@@ -32,8 +32,12 @@ await using (var scope = app.Services.CreateAsyncScope())
 app.UseExceptionHandler();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Product API v1"));
-app.UseRouting(); app.UseHttpMetrics(); app.UseAuthorization();
-app.MapControllers(); app.MapHealthChecks("/health"); app.MapMetrics("/metrics");
+app.UseRouting();
+app.UseHttpMetrics(); 
+app.UseAuthorization();
+app.MapControllers(); 
+app.MapHealthChecks("/health");
+app.MapMetrics("/metrics");
 
 
 

@@ -13,7 +13,7 @@ namespace Infrastructure.DesignTime
         public OrderDbContext CreateDbContext(string[] args)
         {
            
-            var basePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Web");
+            var basePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Api");
 
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath(basePath)
@@ -29,9 +29,9 @@ namespace Infrastructure.DesignTime
             }
 
             builder.UseNpgsql(
-                connectionString,
-                b => b.MigrationsAssembly("Infrastructure") // migrations ficam no projeto Infrastructure
-            );
+                 connectionString,
+                 b => b.MigrationsAssembly(typeof(OrderDbContext).Assembly.FullName)
+             );
 
             return new OrderDbContext(builder.Options);
         }

@@ -1,9 +1,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.4.11626.88 stable
+VisualStudioVersion = 18.4.11626.88
 MinimumVisualStudioVersion = 10.0.40219.1
-
-# ── Solution Folders ────────────────────────────────────────────────────────
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Customer", "Customer", "{F0000001-0000-0000-0000-000000000001}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Product", "Product", "{F0000001-0000-0000-0000-000000000002}"
@@ -14,8 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notification", "Notificatio
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AlertService", "AlertService", "{F0000001-0000-0000-0000-000000000005}"
 EndProject
-
-# ── Customer ────────────────────────────────────────────────────────────────
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Customer.Reference", "src\Customer\Reference\Customer.Reference.csproj", "{A0000001-0000-0000-0000-000000000001}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Customer.Domain", "src\Customer\Domain\Customer.Domain.csproj", "{7CD2D8C1-50BB-44CA-8E62-1FE0CDFD8C98}"
@@ -26,8 +22,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Customer.Infrastructure", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Customer.Api", "src\Customer\Api\Customer.Api.csproj", "{CD78CFFB-B5AB-4AA6-8365-E060257E6186}"
 EndProject
-
-# ── Product ─────────────────────────────────────────────────────────────────
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Product.Reference", "src\Product\Reference\Product.Reference.csproj", "{A0000001-0000-0000-0000-000000000002}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Product.Domain", "src\Product\Domain\Product.Domain.csproj", "{662AC292-56BB-4CF8-9FCB-930A958F7FC9}"
@@ -38,8 +32,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Product.Infrastructure", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Product.Api", "src\Product\Api\Product.Api.csproj", "{578F575E-5639-4F4E-B195-15FC880494CB}"
 EndProject
-
-# ── Order ───────────────────────────────────────────────────────────────────
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Order.Reference", "src\Order\Reference\Order.Reference.csproj", "{A0000001-0000-0000-0000-000000000003}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Order.Domain", "src\Order\Domain\Order.Domain.csproj", "{36B1D8E2-5DBF-438A-A9A3-FBE1A0AC6541}"
@@ -50,8 +42,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Order.Infrastructure", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Order.Api", "src\Order\Api\Order.Api.csproj", "{4E659D61-696B-45EA-8E52-28CA8389F751}"
 EndProject
-
-# ── Notification ─────────────────────────────────────────────────────────────
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Reference", "src\Notification\Reference\Notification.Reference.csproj", "{A0000001-0000-0000-0000-000000000004}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Domain", "src\Notification\Domain\Notification.Domain.csproj", "{CC8AE1DB-11E4-4841-BEBD-B671BE56055C}"
@@ -62,15 +52,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Infrastructure
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Api", "src\Notification\Api\Notification.Api.csproj", "{67E5639E-60FC-40CE-8941-0066DE0F4EFC}"
 EndProject
-
-# ── AlertService ─────────────────────────────────────────────────────────────
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertService.Core", "alert-service\src\AlertService.Core\AlertService.Core.csproj", "{A1B2C3D4-0001-0001-0001-000000000002}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertService.Infrastructure", "alert-service\src\AlertService.Infrastructure\AlertService.Infrastructure.csproj", "{A1B2C3D4-0001-0001-0001-000000000003}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertService.API", "alert-service\src\AlertService.API\AlertService.API.csproj", "{A1B2C3D4-0001-0001-0001-000000000001}"
 EndProject
-
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F0000001-0000-0000-0000-000000000099}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Customer.Domain.Tests", "tests\Customer.Domain.Tests\Customer.Domain.Tests.csproj", "{ECE796D3-3A6F-4CD3-A15A-99AE3F78D665}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Customer.Application.Tests", "tests\Customer.Application.Tests\Customer.Application.Tests.csproj", "{E126EA1B-4AD1-4064-8A36-77357B919AD5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Product.Domain.Tests", "tests\Product.Domain.Tests\Product.Domain.Tests.csproj", "{F3D6E8D5-C8F3-45FF-AB46-A69AEBEA3E2F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Order.Domain.Tests", "tests\Order.Domain.Tests\Order.Domain.Tests.csproj", "{EDA97581-D0B0-42A9-9A18-1F73687D000B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Order.Application.Tests", "tests\Order.Application.Tests\Order.Application.Tests.csproj", "{B8E8A221-B05B-4C8B-9416-3966E4CEA624}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -157,10 +156,6 @@ Global
 		{67E5639E-60FC-40CE-8941-0066DE0F4EFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{67E5639E-60FC-40CE-8941-0066DE0F4EFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{67E5639E-60FC-40CE-8941-0066DE0F4EFC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A1B2C3D4-0001-0001-0001-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A1B2C3D4-0001-0001-0001-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A1B2C3D4-0001-0001-0001-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A1B2C3D4-0001-0001-0001-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A1B2C3D4-0001-0001-0001-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A1B2C3D4-0001-0001-0001-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-0001-0001-0001-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -169,6 +164,33 @@ Global
 		{A1B2C3D4-0001-0001-0001-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-0001-0001-0001-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-0001-0001-0001-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0001-0001-0001-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0001-0001-0001-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0001-0001-0001-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0001-0001-0001-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECE796D3-3A6F-4CD3-A15A-99AE3F78D665}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECE796D3-3A6F-4CD3-A15A-99AE3F78D665}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECE796D3-3A6F-4CD3-A15A-99AE3F78D665}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECE796D3-3A6F-4CD3-A15A-99AE3F78D665}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E126EA1B-4AD1-4064-8A36-77357B919AD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E126EA1B-4AD1-4064-8A36-77357B919AD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E126EA1B-4AD1-4064-8A36-77357B919AD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E126EA1B-4AD1-4064-8A36-77357B919AD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3D6E8D5-C8F3-45FF-AB46-A69AEBEA3E2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3D6E8D5-C8F3-45FF-AB46-A69AEBEA3E2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3D6E8D5-C8F3-45FF-AB46-A69AEBEA3E2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3D6E8D5-C8F3-45FF-AB46-A69AEBEA3E2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDA97581-D0B0-42A9-9A18-1F73687D000B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDA97581-D0B0-42A9-9A18-1F73687D000B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDA97581-D0B0-42A9-9A18-1F73687D000B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDA97581-D0B0-42A9-9A18-1F73687D000B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8E8A221-B05B-4C8B-9416-3966E4CEA624}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8E8A221-B05B-4C8B-9416-3966E4CEA624}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8E8A221-B05B-4C8B-9416-3966E4CEA624}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8E8A221-B05B-4C8B-9416-3966E4CEA624}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A0000001-0000-0000-0000-000000000001} = {F0000001-0000-0000-0000-000000000001}
@@ -191,12 +213,14 @@ Global
 		{49DD2E59-6FE9-47F1-8D10-F666C2A9DBEA} = {F0000001-0000-0000-0000-000000000004}
 		{2D710E57-0E03-4EF4-B09E-8B5FA9A28074} = {F0000001-0000-0000-0000-000000000004}
 		{67E5639E-60FC-40CE-8941-0066DE0F4EFC} = {F0000001-0000-0000-0000-000000000004}
-		{A1B2C3D4-0001-0001-0001-000000000001} = {F0000001-0000-0000-0000-000000000005}
 		{A1B2C3D4-0001-0001-0001-000000000002} = {F0000001-0000-0000-0000-000000000005}
 		{A1B2C3D4-0001-0001-0001-000000000003} = {F0000001-0000-0000-0000-000000000005}
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
+		{A1B2C3D4-0001-0001-0001-000000000001} = {F0000001-0000-0000-0000-000000000005}
+		{ECE796D3-3A6F-4CD3-A15A-99AE3F78D665} = {F0000001-0000-0000-0000-000000000099}
+		{E126EA1B-4AD1-4064-8A36-77357B919AD5} = {F0000001-0000-0000-0000-000000000099}
+		{F3D6E8D5-C8F3-45FF-AB46-A69AEBEA3E2F} = {F0000001-0000-0000-0000-000000000099}
+		{EDA97581-D0B0-42A9-9A18-1F73687D000B} = {F0000001-0000-0000-0000-000000000099}
+		{B8E8A221-B05B-4C8B-9416-3966E4CEA624} = {F0000001-0000-0000-0000-000000000099}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {76543052-957A-4013-B7A1-085D00D095C6}

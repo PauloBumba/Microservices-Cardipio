@@ -5,31 +5,55 @@ on:
     branches:
       - develop
       - main
-
   pull_request:
     branches:
       - main
 
 jobs:
-  build:
-
+  build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ecommerce-ms
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
-    - name: Restore
-      run: dotnet restore
+      - name: Restore
+        run: dotnet restore ECommerce.sln
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+      - name: Build
+        run: dotnet build ECommerce.sln --configuration Release --no-restore
 
-    - name: Test
-      run: dotnet test --configuration Release --no-build
+      - name: Test
+        run: |
+          dotnet test ECommerce.sln \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --results-directory TestResults \
+            --logger "trx;LogFileName=results.trx" \
+            --collect:"XPlat Code Coverage"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ecommerce-ms/TestResults/

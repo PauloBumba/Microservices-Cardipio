@@ -6,6 +6,7 @@
     <RootNamespace>Notification.Api</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4"/>
     <ProjectReference Include="../Reference/Notification.Reference.csproj" />
     <ProjectReference Include="../Application/Notification.Application.csproj" />
     <ProjectReference Include="../Infrastructure/Notification.Infrastructure.csproj" />

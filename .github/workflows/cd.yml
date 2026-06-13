@@ -6,39 +6,91 @@ on:
       - main
 
 jobs:
-
-  docker:
-
+  build-test:
+    name: Build & Test (Gate)
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ecommerce-ms
+
     steps:
+      - uses: actions/checkout@v4
 
-    - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
 
-    - name: Login DockerHub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
 
-    - name: Build Product Service
-      run: |
-        docker build \
-        -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest \
-        -f src/Product/Api/Dockerfile .
+      - name: Restore
+        run: dotnet restore ECommerce.sln
 
-    - name: Push Product Service
-      run: |
-        docker push \
-        ${{ secrets.DOCKER_USERNAME }}/product-service:latest
+      - name: Build
+        run: dotnet build ECommerce.sln --configuration Release --no-restore
 
-    - name: Build Customer Service
-      run: |
-        docker build \
-        -t ${{ secrets.DOCKER_USERNAME }}/customer-service:latest \
-        -f src/Customer/Api/Dockerfile .
+      - name: Test (gate — falha bloqueia o push)
+        run: dotnet test ECommerce.sln --configuration Release --no-build --verbosity minimal
 
-    - name: Push Customer Service
-      run: |
-        docker push \
-        ${{ secrets.DOCKER_USERNAME }}/customer-service:latest
+  docker:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: build-test          # só executa se os testes passarem
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Customer Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ecommerce-ms
+          file: ecommerce-ms/src/Customer/Api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/customer-service:latest,${{ secrets.DOCKER_USERNAME }}/customer-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & Push Product Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ecommerce-ms
+          file: ecommerce-ms/src/Product/Api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/product-service:latest,${{ secrets.DOCKER_USERNAME }}/product-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & Push Order Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ecommerce-ms
+          file: ecommerce-ms/src/Order/Api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/order-service:latest,${{ secrets.DOCKER_USERNAME }}/order-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & Push Notification Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ecommerce-ms
+          file: ecommerce-ms/src/Notification/Api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/notification-service:latest,${{ secrets.DOCKER_USERNAME }}/notification-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

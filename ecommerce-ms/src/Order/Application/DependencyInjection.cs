@@ -1,3 +1,4 @@
+using Customer.Application.Behaviors;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,7 @@ public static class DependencyInjection
         {
             cfg.RegisterServicesFromAssembly(asm);
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         });
         services.AddValidatorsFromAssembly(asm);
