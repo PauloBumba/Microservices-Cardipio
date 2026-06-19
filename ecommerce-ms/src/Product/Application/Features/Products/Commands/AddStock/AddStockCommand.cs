@@ -1,4 +1,13 @@
 using MediatR;
-using Product.Application.DTOs;
+using Shared.Application.Behaviors;
+using Shared.Application.Caching;
+using Shared.Application.Response;
+
 namespace Product.Application.Features.Products.Commands.AddStock;
-public sealed record AddStockCommand(Guid ProductId, int Quantity) : IRequest<StockInfoDto>;
+
+public sealed record AddStockCommand(Guid ProductId, int Quantity)
+    : IRequest<ApiResponse<bool>>, IBaseCommand, ICacheInvalidator
+{
+    public IEnumerable<string> CacheKeysToInvalidate =>
+        ["products:all", $"products:{ProductId}"];
+}

@@ -35,7 +35,7 @@ app.MapHealthChecks("/health");
 app.MapMetrics("/metrics");
 app.MapGet("/", () => Results.Ok(new
 {
-    Service = "Customer Service",
+    Service = "Notification Service",
     Status = "Running",
     Version = "1.0.0",
     Swagger = "/swagger",

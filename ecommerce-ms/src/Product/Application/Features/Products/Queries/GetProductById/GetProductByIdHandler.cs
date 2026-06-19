@@ -1,25 +1,21 @@
 using MediatR;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
 using Product.Application.DTOs;
-using Product.Application.Mappings;
-using Product.Domain.Repositories;
-using System.Text.Json;
+using Product.Application.Repositories;
+using Shared.Application.Response;
+
 namespace Product.Application.Features.Products.Queries.GetProductById;
-public sealed class GetProductByIdHandler(
-    IProductRepository repo, IDistributedCache cache, ILogger<GetProductByIdHandler> log)
-    : IRequestHandler<GetProductByIdQuery, ProductDto?>
+
+public sealed class GetProductByIdHandler(IProductRepository repo)
+    : IRequestHandler<GetProductByIdQuery, ApiResponse<ProductDto>>
 {
-    public async Task<ProductDto?> Handle(GetProductByIdQuery q, CancellationToken ct)
+    public async Task<ApiResponse<ProductDto>> Handle(GetProductByIdQuery query, CancellationToken ct)
     {
-        var key = $"product:{q.Id}";
-        var cached = await cache.GetStringAsync(key, ct);
-        if (cached is not null) { log.LogDebug("Cache hit: {Key}", key); return JsonSerializer.Deserialize<ProductDto>(cached); }
-        var p = await repo.GetByIdAsync(q.Id, ct);
-        if (p is null) return null;
-        var dto = p.ToDto();
-        await cache.SetStringAsync(key, JsonSerializer.Serialize(dto),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) }, ct);
-        return dto;
+        var p = await repo.GetByIdAsync(query.Id, ct);
+        if (p is null) return ApiResponse<ProductDto>.Fail("Produto não encontrado.");
+        return ApiResponse<ProductDto>.Ok(new ProductDto(
+            p.Id, p.Name, p.Description, p.Sku,
+            p.Price.Amount, p.Price.Currency,
+            p.StockQuantity, p.ReservedQuantity, p.AvailableQuantity,
+            p.Category, p.IsActive, p.CreatedAt, p.UpdatedAt));
     }
 }

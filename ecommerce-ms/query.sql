@@ -1,0 +1,1 @@
+﻿SELECT id, name, "connectionStatus" FROM "Instance";

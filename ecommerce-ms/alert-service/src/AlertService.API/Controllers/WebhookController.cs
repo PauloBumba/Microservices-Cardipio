@@ -13,26 +13,36 @@ public sealed class WebhookController(
     /// <summary>
     /// Endpoint configurado no Grafana como Contact Point (Webhook).
     /// URL: http://alert-service:8080/api/alerts/webhook
+    /// Autenticação: Authorization: Bearer {Webhook:Secret}
     /// </summary>
     [HttpPost("webhook")]
     public async Task<IActionResult> Webhook(
         [FromBody] GrafanaWebhookPayload payload,
-        [FromHeader(Name = "X-Alert-Token")] string? token,
         CancellationToken ct)
     {
-        // Validação simples de token (opcional mas recomendada)
         var expectedToken = HttpContext.RequestServices
             .GetRequiredService<IConfiguration>()["Webhook:Secret"];
 
-        if (!string.IsNullOrWhiteSpace(expectedToken) && token != expectedToken)
+        if (!string.IsNullOrWhiteSpace(expectedToken))
         {
-            logger.LogWarning("Webhook recebido com token inválido");
-            return Unauthorized();
+            var authHeader = Request.Headers.Authorization.ToString();
+            // Aceita "Bearer <token>" ou o token puro, e também o header legado X-Alert-Token
+            var receivedToken = authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                ? authHeader["Bearer ".Length..].Trim()
+                : (authHeader.Trim() is { Length: > 0 } a ? a : Request.Headers["X-Alert-Token"].ToString());
+
+            logger.LogInformation("Webhook auth header recebido: '{Auth}' (esperado token configurado)", authHeader);
+
+            if (receivedToken != expectedToken)
+            {
+                logger.LogWarning("Webhook recebido com token inválido. Header Authorization recebido: '{Auth}'", authHeader);
+                return Unauthorized();
+            }
         }
 
         logger.LogInformation(
-            "Webhook recebido: [{State}] {Title} — {Count} alerts",
-            payload.State, payload.Title, payload.Alerts.Count);
+            "Webhook recebido: [{State}] {Title} - {Count} alerts",
+            payload.State, payload.Title, payload.AlertsList.Count);
 
         await dispatcher.DispatchAsync(payload, ct);
         return Ok(new { received = true, channels = 3 });
@@ -53,7 +63,7 @@ public sealed class WebhookController(
             Title: $"[TESTE] Alerta de {severity}",
             Message: "Este é um alerta de teste disparado manualmente.",
             State: "alerting",
-            OrgName: "ECommerce",
+            OrgId: 1,
             Alerts:
             [
                 new GrafanaAlert(

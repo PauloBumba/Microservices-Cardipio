@@ -1,37 +1,29 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Order.Application.Contracts;
-using Order.Application.DTOs;
-using Order.Application.Mappings;
+using Order.Application.Repositories;
 using Order.Domain.Entities;
-using Order.Domain.Exceptions;
-using Order.Domain.Repositories;
+using Shared.Application.Response;
+
 namespace Order.Application.Features.Orders.Commands.CreateOrder;
+
 public sealed class CreateOrderHandler(
-    IOrderRepository repo, IUnitOfWork uow,
-    IProductServiceClient productClient, ILogger<CreateOrderHandler> log)
-    : IRequestHandler<CreateOrderCommand, OrderDto>
+    IOrderRepository repo,
+    ILogger<CreateOrderHandler> logger)
+    : IRequestHandler<CreateOrderCommand, ApiResponse<Guid>>
 {
-    public async Task<OrderDto> Handle(CreateOrderCommand cmd, CancellationToken ct)
+    public async Task<ApiResponse<Guid>> Handle(CreateOrderCommand cmd, CancellationToken ct)
     {
-        var order = Orderss.Create(cmd.CustomerId,cmd.Street,cmd.City,cmd.State,cmd.ZipCode,cmd.Country,cmd.Notes);
+        if (cmd.Items.Count == 0)
+            return ApiResponse<Guid>.Fail("O pedido deve ter ao menos um item.");
 
-        foreach (var line in cmd.Items)
-        {
-            var product = await productClient.GetProductAsync(line.ProductId, ct)
-                ?? throw new OrderDomainException($"Produto {line.ProductId} não encontrado.");
-            if (!product.IsActive)
-                throw new OrderDomainException($"Produto '{product.Name}' está inativo.");
-            var reserved = await productClient.ReserveStockAsync(line.ProductId, line.Quantity, ct);
-            if (!reserved)
-                throw new OrderDomainException($"Estoque insuficiente para '{product.Name}'.");
-            order.AddItem(product.Id,product.Name,product.Sku,line.Quantity,product.Price,product.Currency);
-        }
+        var order = Orders.Create(cmd.CustomerId);
 
-        order.Confirm();
+        foreach (var item in cmd.Items)
+            order.AddItem(item.ProductId, item.ProductName, item.Sku,
+                item.Quantity, item.UnitPrice, item.Currency);
+
         await repo.AddAsync(order, ct);
-        await uow.CommitAsync(ct);
-        log.LogInformation("Pedido criado: {OrderNumber}", order.OrderNumber);
-        return order.ToDto();
+        logger.LogInformation("Pedido criado: {Id} Nº={Number}", order.Id, order.OrderNumber);
+        return ApiResponse<Guid>.Ok(order.Id);
     }
 }

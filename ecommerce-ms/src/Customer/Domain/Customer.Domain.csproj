@@ -1,8 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-  <!-- Domain não tem dependências externas nem de outros projetos internos -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Domain\Shared.Domain.csproj" />
+  </ItemGroup>
 </Project>

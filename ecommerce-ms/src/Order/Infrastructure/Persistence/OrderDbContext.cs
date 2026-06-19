@@ -1,37 +1,56 @@
 using Microsoft.EntityFrameworkCore;
 using Order.Domain.Entities;
-using Order.Domain.Primitives;
-using Order.Domain.Repositories;
-using Order.Infrastructure.Outbox;
+using Order.Infrastructure.Idempotency;
+using Shared.Application.Behaviors;
+using Shared.Infrastructure.Outbox;
 using System.Text.Json;
+
 namespace Order.Infrastructure.Persistence;
 
-public sealed class OrderDbContext(DbContextOptions<OrderDbContext> options)
-    : DbContext(options), IUnitOfWork
+public class OrderDbContext(DbContextOptions<OrderDbContext> options)
+    : DbContext(options), IUnitOfWorkAccessor
 {
-    public DbSet<Order.Domain.Entities.Orderss> Orders => Set<Order.Domain.Entities.Orderss>();
-    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Orders> Orders => Set<Orders>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<OrderProcessedEvent> ProcessedEvents => Set<OrderProcessedEvent>();
+
+    public async Task CommitAsync(CancellationToken ct = default) => await SaveChangesAsync(ct);
+
     protected override void OnModelCreating(ModelBuilder mb)
     {
         mb.ApplyConfigurationsFromAssembly(typeof(OrderDbContext).Assembly);
-        base.OnModelCreating(mb);
-    }
-    public async Task<int> CommitAsync(CancellationToken ct = default)
-    {
-        var aggs = ChangeTracker.Entries<Entity>().Where(e => e.Entity.DomainEvents.Any()).Select(e => e.Entity).ToList();
-        foreach (var agg in aggs)
+        mb.Entity<OutboxMessage>(e => { e.ToTable("OutboxMessages"); e.HasKey(x => x.Id); e.Property(x => x.Status).HasConversion<string>(); });
+        mb.Entity<OrderProcessedEvent>(e => { e.ToTable("ProcessedEvents"); e.HasKey(x => x.EventId); });
+        mb.Entity<Orders>(e =>
         {
-            foreach (var ev in agg.DomainEvents)
-                OutboxMessages.Add(new OutboxMessage
-                {
-                    Id = Guid.NewGuid(),
-                    Type = ev.GetType().AssemblyQualifiedName!,
-                    Payload = JsonSerializer.Serialize(ev, ev.GetType()),
-                    CreatedAt = DateTime.UtcNow
-                });
-            agg.ClearDomainEvents();
-        }
-        return await SaveChangesAsync(ct);
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasConversion<string>();
+            e.OwnsMany(x => x.Items, item =>
+            {
+                item.ToTable("OrderItems");
+                item.HasKey(i => i.Id);
+                item.Property(i => i.Subtotal).HasComputedColumnSql("\"Quantity\" * \"UnitPrice\"", stored: true);
+            });
+        });
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        ConvertDomainEventsToOutbox();
+        return await base.SaveChangesAsync(ct);
+    }
+
+    private void ConvertDomainEventsToOutbox()
+    {
+        var events = ChangeTracker.Entries<Shared.Domain.Primitives.AggregateRoot>()
+            .SelectMany(e => e.Entity.DomainEvents)
+            .Select(ev => new OutboxMessage
+            {
+                Type = $"{ev.GetType().FullName}, {ev.GetType().Assembly.GetName().Name}",
+                Payload = JsonSerializer.Serialize(ev, ev.GetType())
+            }).ToList();
+        if (events.Count > 0) OutboxMessages.AddRange(events);
+        foreach (var entry in ChangeTracker.Entries<Shared.Domain.Primitives.AggregateRoot>())
+            entry.Entity.ClearDomainEvents();
     }
 }

@@ -1,17 +1,18 @@
-using Customer.Domain.Exceptions;
-using Customer.Domain.Repositories;
+using Customer.Application.Repositories;
 using MediatR;
-using Microsoft.Extensions.Logging;
+using Shared.Application.Response;
+
 namespace Customer.Application.Features.Customers.Commands.DeactivateCustomer;
-public sealed class DeactivateCustomerHandler(
-    ICustomerRepository repo, IUnitOfWork uow, ILogger<DeactivateCustomerHandler> log)
-    : IRequestHandler<DeactivateCustomerCommand>
+
+public sealed class DeactivateCustomerHandler(ICustomerRepository repo)
+    : IRequestHandler<DeactivateCustomerCommand, ApiResponse<bool>>
 {
-    public async Task Handle(DeactivateCustomerCommand cmd, CancellationToken ct)
+    public async Task<ApiResponse<bool>> Handle(DeactivateCustomerCommand cmd, CancellationToken ct)
     {
-        var c = await repo.GetByIdTrackedAsync(cmd.Id, ct) ?? throw new CustomerNotFoundException(cmd.Id);
-        c.Deactivate();
-        await uow.CommitAsync(ct);
-        log.LogInformation("Cliente desativado: {Id}", c.Id);
+        var customer = await repo.GetByIdAsync(cmd.Id, ct);
+        if (customer is null) return ApiResponse<bool>.Fail("Cliente não encontrado.");
+
+        customer.Deactivate();
+        return ApiResponse<bool>.Ok(true);
     }
 }

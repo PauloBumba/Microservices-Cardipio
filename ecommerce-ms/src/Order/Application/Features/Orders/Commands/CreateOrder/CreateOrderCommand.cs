@@ -1,8 +1,10 @@
 using MediatR;
-using Order.Application.DTOs;
+using Shared.Application.Behaviors;
+using Shared.Application.Response;
+
 namespace Order.Application.Features.Orders.Commands.CreateOrder;
-public sealed record CreateOrderCommand(
-    Guid CustomerId, string Street, string City, string State,
-    string ZipCode, string Country, string? Notes,
-    IReadOnlyList<OrderLineDto> Items) : IRequest<OrderDto>;
-public sealed record OrderLineDto(Guid ProductId, int Quantity);
+
+public sealed record CreateOrderItemDto(Guid ProductId, string ProductName, string Sku, int Quantity, decimal UnitPrice, string Currency);
+
+public sealed record CreateOrderCommand(Guid CustomerId, List<CreateOrderItemDto> Items)
+    : IRequest<ApiResponse<Guid>>, IBaseCommand;

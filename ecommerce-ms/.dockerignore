@@ -1,0 +1,24 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/.vs/
+
+# Git
+.git
+.gitignore
+
+# Tests
+**/tests/
+**/*.Tests/
+
+# IDE
+**/.idea/
+**/*.user
+**/*.suo
+
+# Logs
+**/*.log
+
+# Temp
+**/tmp/
+**/.tmp/

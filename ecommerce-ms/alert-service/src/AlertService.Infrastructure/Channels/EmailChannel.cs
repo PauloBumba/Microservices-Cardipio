@@ -12,10 +12,10 @@ public sealed class EmailOptions
 {
     public string SmtpHost { get; set; } = "smtp.gmail.com";
     public int SmtpPort { get; set; } = 587;
-    public string Username { get; set; } = "";
-    public string Password { get; set; } = "";
+    public string Username { get; set; } = "paulomvbumba@gmail.com";
+    public string Password { get; set; } = "onwj eijc kdce rckb";
     public string FromName { get; set; } = "ECommerce Alertas";
-    public string FromAddress { get; set; } = "";
+    public string FromAddress { get; set; } = "paulomvbumba@gmail.com";
     /// <summary>Destinatários separados por vírgula</summary>
     public string ToAddresses { get; set; } = "";
 }

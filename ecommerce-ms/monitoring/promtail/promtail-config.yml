@@ -1,0 +1,106 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # ── Coleta todos os containers Docker via socket ──────────────────────────
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: status
+            values: [running]
+    relabel_configs:
+      # Label: nome do container
+      - source_labels: [__meta_docker_container_name]
+        regex: "/(.*)"
+        target_label: container
+      # Label: nome da imagem
+      - source_labels: [__meta_docker_container_image_name]
+        target_label: image
+      # Label: serviço (compose service name)
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      # Label: projeto compose
+      - source_labels: [__meta_docker_container_label_com_docker_compose_project]
+        target_label: compose_project
+      # Drop containers sem serviço compose (containers avulsos)
+      - source_labels: [service]
+        regex: ".+"
+        action: keep
+
+    pipeline_stages:
+      # ── Detecta logs JSON do ASP.NET Core ──────────────────────────────────
+      - json:
+          expressions:
+            level: level
+            msg: message
+            ts: timestamp
+            exception: exception
+            requestPath: Properties.RequestPath
+            statusCode: Properties.StatusCode
+            elapsed: Properties.Elapsed
+          drop_malformed: false
+
+      # Normaliza level para minúsculo
+      - template:
+          source: level
+          template: '{{ ToLower .Value }}'
+
+      - labels:
+          level:
+          service:
+          container:
+
+      # ── Extrai métricas de log por nível ──────────────────────────────────
+      - metrics:
+          log_lines_total:
+            type: Counter
+            description: "Total de linhas de log por serviço e nível"
+            prefix: promtail_
+            max_idle_duration: 24h
+            config:
+              match_all: true
+              action: inc
+
+      # ── Marca logs de erro/exception ──────────────────────────────────────
+      - match:
+          selector: '{service=~".+"} |~ "(?i)(error|exception|fail|fatal|panic|unhandled)"'
+          stages:
+            - labels:
+                log_type: error
+
+      # ── Marca logs de RabbitMQ ────────────────────────────────────────────
+      - match:
+          selector: '{service="rabbitmq"}'
+          stages:
+            - labels:
+                log_type: rabbitmq
+
+      # ── Marca logs dos microserviços .NET ─────────────────────────────────
+      - match:
+          selector: '{service=~"customer-service|product-service|order-service|notification-service"}'
+          stages:
+            - labels:
+                log_type: microservice
+
+      # ── Marca logs do Evolution API ───────────────────────────────────────
+      - match:
+          selector: '{service="evolution-api"}'
+          stages:
+            - labels:
+                log_type: whatsapp
+
+      # ── Marca logs do alert-service ───────────────────────────────────────
+      - match:
+          selector: '{service="alert-service"}'
+          stages:
+            - labels:
+                log_type: alerting

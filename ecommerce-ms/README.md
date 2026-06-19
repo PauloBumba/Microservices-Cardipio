@@ -160,3 +160,21 @@ src/<Service>/
 | OpenTelemetry         | Tracing distribuído em todos os serviços          |
 | Prometheus Metrics    | /metrics endpoint em todos os serviços            |
 | HealthChecks          | /health com postgres + redis + rabbitmq           |
+
+
+make help           # lista tudo
+make up             # sobe toda a stack
+make migrate        # migrations em todos os serviços de uma vez
+make seed           # popula dados de teste
+make test           # unit + api end-to-end
+make outbox-status  # vê mensagens pendentes no Outbox de cada banco
+make deadletter-requeue  # reprocessa mensagens mortas
+make rabbit-ui / jaeger / grafana  # abre as UIs
+
+
+make k6-smoke   # 1 VU, 1 min — sanidade antes de qualquer coisa
+make k6-load    # 50 VUs, 5 min — carga normal com métricas de cache hit
+make k6-stress  # até 200 VUs — acha o ponto de ruptura
+make k6-spike   # pico repentino de 250 VUs — simula flash sale
+make k6-soak    # 30 VUs por 30 min — detecta memory leak
+make k6-all     # roda smoke → load → stress em sequência

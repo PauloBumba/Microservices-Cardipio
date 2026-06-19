@@ -1,14 +1,17 @@
 using Customer.Application.DTOs;
 using Customer.Application.Mappings;
-using Customer.Domain.Repositories;
+using Customer.Application.Repositories;
 using MediatR;
+using Shared.Application.Response;
+
 namespace Customer.Application.Features.Customers.Queries.GetCustomers;
-public sealed class GetCustomersHandler(ICustomerRepository repo) : IRequestHandler<GetCustomersQuery, PagedResult<CustomerDto>>
+
+public sealed class GetCustomersHandler(ICustomerRepository repo)
+    : IRequestHandler<GetCustomersQuery, ApiResponse<List<CustomerDto>>>
 {
-    public async Task<PagedResult<CustomerDto>> Handle(GetCustomersQuery q, CancellationToken ct)
+    public async Task<ApiResponse<List<CustomerDto>>> Handle(GetCustomersQuery query, CancellationToken ct)
     {
-        var items = await repo.GetPagedAsync(q.Page, q.PageSize, ct);
-        var total = await repo.CountAsync(ct);
-        return new PagedResult<CustomerDto>(items.Select(c => c.ToDto()).ToList(), total, q.Page, q.PageSize);
+        var list = await repo.GetAllAsync(ct);
+        return ApiResponse<List<CustomerDto>>.Ok(list.Select(c => c.ToDto()).ToList());
     }
 }

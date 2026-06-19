@@ -1,4 +1,5 @@
-using Customer.Domain.Repositories;
+using Customer.Application.Behaviors;
+using Customer.Application.Repositories;
 using Customer.Infrastructure.Outbox;
 using Customer.Infrastructure.Persistence;
 using Customer.Infrastructure.Repositories;
@@ -6,15 +7,36 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Application.Behaviors;
+
 namespace Customer.Infrastructure;
+
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration cfg)
     {
-        services.AddDbContext<CustomerDbContext>(opt => opt.UseNpgsql(cfg.GetConnectionString("DefaultConnection")));
+        // ── Banco de dados ────────────────────────────────────────────────
+        services.AddDbContext<CustomerDbContext>(opt =>
+            opt.UseNpgsql(cfg.GetConnectionString("DefaultConnection"),
+                npgsql => npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
+
+        // ── UoW (TransactionBehavior usa esta interface) ───────────────────
+        services.AddScoped<IUnitOfWorkAccessor>(sp => sp.GetRequiredService<CustomerDbContext>());
+
+        // ── Repositórios ──────────────────────────────────────────────────
         services.AddScoped<ICustomerRepository, CustomerRepository>();
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<CustomerDbContext>());
-        services.AddHostedService<OutboxProcessor>();
+
+        // ── Outbox Processor melhorado ────────────────────────────────────
+        services.AddHostedService<CustomerOutboxProcessor>();
+
+        // ── Cache distribuído (Redis ou in-memory) ────────────────────────
+        var redis = cfg.GetConnectionString("Redis");
+        if (!string.IsNullOrEmpty(redis))
+            services.AddStackExchangeRedisCache(o => o.Configuration = redis);
+        else
+            services.AddDistributedMemoryCache();
+
+        // ── MassTransit + RabbitMQ ────────────────────────────────────────
         services.AddMassTransit(x =>
         {
             x.SetKebabCaseEndpointNameFormatter();
@@ -29,6 +51,7 @@ public static class DependencyInjection
                 c.ConfigureEndpoints(ctx);
             });
         });
+
         return services;
     }
 }

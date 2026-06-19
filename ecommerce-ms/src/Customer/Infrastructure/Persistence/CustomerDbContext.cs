@@ -1,40 +1,62 @@
-using Customer.Domain.Primitives;
-using Customer.Domain.Repositories;
+using Customer.Domain.Entities;
+using Customer.Infrastructure.Idempotency;
 using Customer.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-namespace Customer.Infrastructure.Persistence
+using Shared.Application.Behaviors;
+using Shared.Infrastructure.Outbox;
+
+namespace Customer.Infrastructure.Persistence;
+
+public class CustomerDbContext(DbContextOptions<CustomerDbContext> options)
+    : DbContext(options), IUnitOfWorkAccessor
 {
-    public sealed class CustomerDbContext(DbContextOptions<CustomerDbContext> options)
-        : DbContext(options), IUnitOfWork
+    public DbSet<Customerss> Customers => Set<Customerss>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<CustomerProcessedEvent> ProcessedEvents => Set<CustomerProcessedEvent>();
+
+    public async Task CommitAsync(CancellationToken ct = default)
+        => await SaveChangesAsync(ct);
+
+    protected override void OnModelCreating(ModelBuilder mb)
     {
-        public DbSet<Domain.Entities.Customerss> Customers => Set<Domain.Entities.Customerss>();
-        public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+        mb.ApplyConfigurationsFromAssembly(typeof(CustomerDbContext).Assembly);
 
-        protected override void OnModelCreating(ModelBuilder mb)
+        mb.Entity<OutboxMessage>(e =>
         {
-            mb.ApplyConfigurationsFromAssembly(typeof(CustomerDbContext).Assembly);
-            base.OnModelCreating(mb);
-        }
+            e.ToTable("OutboxMessages");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasConversion<string>();
+        });
 
-        public async Task<int> CommitAsync(CancellationToken ct = default)
+        mb.Entity<CustomerProcessedEvent>(e =>
         {
-            var aggregates = ChangeTracker.Entries<Entity>()
-                .Where(e => e.Entity.DomainEvents.Any()).Select(e => e.Entity).ToList();
-            foreach (var agg in aggregates)
-            {
-                foreach (var ev in agg.DomainEvents)
-                    OutboxMessages.Add(new OutboxMessage
-                    {
-                        Id = Guid.NewGuid(),
-                        Type = ev.GetType().AssemblyQualifiedName!,
-                        Payload = JsonSerializer.Serialize(ev, ev.GetType()),
-                        CreatedAt = DateTime.UtcNow
-                    });
-                agg.ClearDomainEvents();
-            }
-            return await SaveChangesAsync(ct);
-        }
+            e.ToTable("ProcessedEvents");
+            e.HasKey(x => x.EventId);
+        });
     }
 
+    // Intercepta SaveChanges para serializar Domain Events no Outbox
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        ConvertDomainEventsToOutbox();
+        return await base.SaveChangesAsync(ct);
+    }
+
+    private void ConvertDomainEventsToOutbox()
+    {
+        var events = ChangeTracker.Entries<Shared.Domain.Primitives.AggregateRoot>()
+            .SelectMany(e => e.Entity.DomainEvents)
+            .Select(ev => new OutboxMessage
+            {
+                Type = $"{ev.GetType().FullName}, {ev.GetType().Assembly.GetName().Name}",
+                Payload = System.Text.Json.JsonSerializer.Serialize(ev, ev.GetType())
+            })
+            .ToList();
+
+        if (events.Count > 0)
+            OutboxMessages.AddRange(events);
+
+        foreach (var entry in ChangeTracker.Entries<Shared.Domain.Primitives.AggregateRoot>())
+            entry.Entity.ClearDomainEvents();
+    }
 }

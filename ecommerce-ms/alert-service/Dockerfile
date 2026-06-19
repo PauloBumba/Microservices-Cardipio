@@ -5,14 +5,18 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY ["src/AlertService.API/AlertService.API.csproj", "AlertService.API/"]
-COPY ["src/AlertService.Core/AlertService.Core.csproj", "AlertService.Core/"]
-COPY ["src/AlertService.Infrastructure/AlertService.Infrastructure.csproj", "AlertService.Infrastructure/"]
+COPY src/AlertService.Core/AlertService.Core.csproj           AlertService.Core/
+COPY src/AlertService.Infrastructure/AlertService.Infrastructure.csproj AlertService.Infrastructure/
+COPY src/AlertService.API/AlertService.API.csproj             AlertService.API/
 
-RUN dotnet restore "AlertService.API/AlertService.API.csproj"
+RUN dotnet restore AlertService.API/AlertService.API.csproj
 
 COPY src/ .
-RUN dotnet publish "AlertService.API/AlertService.API.csproj" -c Release -o /app/publish
+
+RUN dotnet publish AlertService.API/AlertService.API.csproj \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app

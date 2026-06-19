@@ -39,7 +39,16 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 app.MapMetrics("/metrics");
 
-
+app.MapGet("/", () => Results.Ok(new
+{
+    Service = "Product Service",
+    Status = "Running",
+    Version = "1.0.0",
+    Swagger = "/swagger",
+    Health = "/health",
+    Metrics = "/metrics",
+    Timestamp = DateTime.UtcNow
+}));
 
 
 

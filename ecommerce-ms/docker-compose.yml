@@ -1,7 +1,21 @@
 name: ecommerce-ms
 
 services:
-
+  evolution-db:
+    image: postgres:16-alpine
+    container_name: evolution-db
+    environment:
+      POSTGRES_DB: evolution
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: evolution123
+    volumes:
+      - evolution_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution -d evolution"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
   # ─── Databases ──────────────────────────────────────────────────────────────
   customers-db:
     image: postgres:16-alpine
@@ -113,15 +127,142 @@ services:
       - rabbitmq-exporter
       - redis-exporter
 
+  # ─── K6 Load Testing (alimenta o Grafana único via datasource InfluxDB-k6) ────
+  influxdb:
+    image: influxdb:1.8-alpine
+    container_name: k6-influxdb
+    environment:
+      INFLUXDB_DB: k6
+    ports: ["8086:8086"]
+    volumes: [k6_influxdb_data:/var/lib/influxdb]
+    restart: unless-stopped
+
+  # ─── Logging: Loki + Promtail ─────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:3.3.0
+    container_name: loki
+    user: "10001:10001"
+    ports: ["3100:3100"]
+    volumes:
+      - "./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro"
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --timeout=3 http://localhost:3100/ready 2>&1 | grep -q ready || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.3.0
+    container_name: promtail
+    volumes:
+      - "./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      loki: { condition: service_healthy }
+    restart: unless-stopped
+
+  alert-service:
+    build:
+      context: ./alert-service
+      dockerfile: Dockerfile
+    container_name: alert-service
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+
+      # Webhook secret (mesmo valor do grafana-alerts.yaml)
+      Webhook__Secret: TROQUE_POR_UM_TOKEN_SEGURO
+
+      # ── Telegram ────────────────────────────────────────────────────────────
+      Channels__Telegram__BotToken: "8503051121:AAGU0eL0QrOK0O3n_35-VVu6cK_N8zS2MHQ"
+      Channels__Telegram__ChatId: "7089189189"
+
+      # ── WhatsApp (Evolution API) ─────────────────────────────────────────
+      Channels__WhatsApp__Provider: evolution
+      Channels__WhatsApp__EvolutionBaseUrl: http://evolution-api:8080
+      Channels__WhatsApp__EvolutionApiKey: ${EVOLUTION_API_KEY}
+      Channels__WhatsApp__EvolutionInstance: cardipio
+      Channels__WhatsApp__Numbers: ${WHATSAPP_NUMBERS}
+
+      # ── Email ────────────────────────────────────────────────────────────
+      Channels__Email__SmtpHost: smtp.gmail.com
+      Channels__Email__SmtpPort: 587
+      Channels__Email__Username: ${EMAIL_USERNAME}
+      Channels__Email__Password: ${EMAIL_PASSWORD}
+      Channels__Email__FromAddress: ${EMAIL_USERNAME}
+      Channels__Email__ToAddresses: ${EMAIL_TO_ADDRESSES}
+
+    ports: ["5005:8080"]
+    restart: unless-stopped
+
+  # ── Evolution API (WhatsApp) ─────────────────────────────────────────────
+  # Só precisa se usar WhatsApp via Evolution API
+  # Se usar Z-API, remova este bloco — Z-API é cloud, não precisa de container
+  evolution-api:
+    container_name: evolution-api
+    depends_on:
+      redis:
+        condition: service_healthy
+        required: true
+      evolution-db:
+        condition: service_healthy
+        required: true
+    environment:
+      AUTHENTICATION_API_KEY: minha-api-key-super-secreta
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:evolution123@evolution-db:5432/evolution
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/6
+      CACHE_REDIS_PREFIX_KEY: evolution
+      CACHE_REDIS_SAVE_INSTANCES: "false"
+      CACHE_LOCAL_ENABLED: "false"
+      SERVER_URL: http://evolution-api:8080
+    image: atendai/evolution-api:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "8081"
+        protocol: tcp
+    restart: unless-stopped
+
+
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.4.0
     container_name: grafana
-    environment: { GF_SECURITY_ADMIN_PASSWORD: admin123 }
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_ALERTING_ENABLED: "false"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      GF_LOG_LEVEL: warn
     volumes:
       - grafana_data:/var/lib/grafana
       - "./monitoring/grafana/provisioning:/etc/grafana/provisioning"
+     # - "./alert-service/grafana-alerts.yaml:/etc/grafana/provisioning/alerting/alerts.yaml"
     ports: ["3000:3000"]
-    depends_on: [prometheus]
+    depends_on:
+      prometheus: { condition: service_started }
+      influxdb:   { condition: service_started }
+      loki:       { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health | grep ok || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
   # ─── Microservices ────────────────────────────────────────────────────────────
   customer-service:
@@ -203,3 +344,6 @@ volumes:
   notifications_data:
   rabbitmq_data:
   grafana_data:
+  k6_influxdb_data:
+  loki_data:
+  evolution_db_data:
