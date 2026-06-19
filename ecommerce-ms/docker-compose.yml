@@ -214,6 +214,7 @@ services:
         required: true
     environment:
       AUTHENTICATION_API_KEY: minha-api-key-super-secreta
+      CONFIG_SESSION_PHONE_VERSION: "2.3000.1020885143"
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
       DATABASE_CONNECTION_URI: postgresql://evolution:evolution123@evolution-db:5432/evolution
@@ -337,6 +338,15 @@ services:
       rabbitmq:         { condition: service_healthy }
     restart: unless-stopped
 
+ 
+  evolution-manager:
+    image: atendai/evolution-manager:latest
+    container_name: evolution-manager
+    ports: ["8082:80"]
+    depends_on:
+      - evolution-api
+    restart: unless-stopped
+    
 volumes:
   customers_data:
   products_data:
