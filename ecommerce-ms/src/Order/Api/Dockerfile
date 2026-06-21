@@ -1,26 +1,24 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 EXPOSE 8080
-
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-
 # Copia os csproj para cache de restore
-COPY src/Order/Reference/Order.Reference.csproj       src/Order/Reference/
-COPY src/Order/Domain/Order.Domain.csproj             src/Order/Domain/
-COPY src/Order/Application/Order.Application.csproj   src/Order/Application/
-COPY src/Order/Infrastructure/Order.Infrastructure.csproj src/Order/Infrastructure/
-COPY src/Order/Api/Order.Api.csproj                   src/Order/Api/
-
+COPY src/Shared/Domain/Shared.Domain.csproj                 src/Shared/Domain/
+COPY src/Shared/Application/Shared.Application.csproj       src/Shared/Application/
+COPY src/Shared/Infrastructure/Shared.Infrastructure.csproj src/Shared/Infrastructure/
+COPY src/Product/Reference/Product.Reference.csproj       src/Product/Reference/
+COPY src/Product/Domain/Product.Domain.csproj             src/Product/Domain/
+COPY src/Product/Application/Product.Application.csproj   src/Product/Application/
+COPY src/Product/Infrastructure/Product.Infrastructure.csproj src/Product/Infrastructure/
+COPY src/Product/Api/Product.Api.csproj                   src/Product/Api/
 # Restore — só reinstala se .csproj mudar
-RUN dotnet restore src/Order/Api/Order.Api.csproj
-
+RUN dotnet restore src/Product/Api/Product.Api.csproj
 # Copia o restante do código
-COPY src/Order/ src/Order/
-
-RUN dotnet publish src/Order/Api/Order.Api.csproj     -c Release     -o /app/publish     /p:UseAppHost=false
-
+COPY src/Shared/ src/Shared/
+COPY src/Product/ src/Product/
+RUN dotnet publish src/Product/Api/Product.Api.csproj     -c Release     -o /app/publish     /p:UseAppHost=false
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "Order.Api.dll"]
+ENTRYPOINT ["dotnet", "Product.Api.dll"]

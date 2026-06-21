@@ -16,6 +16,7 @@ public sealed class AlertDispatcher(
         var tasks = channels.Select(ch => SendSafeAsync(ch, notification, ct));
         await Task.WhenAll(tasks);
     }
+
     private async Task SendSafeAsync(IAlertChannel channel, AlertNotification notification, CancellationToken ct)
     {
         try
@@ -26,37 +27,94 @@ public sealed class AlertDispatcher(
         catch (Exception ex)
         {
             logger.LogError(ex, "Falha ao enviar alerta via {Channel}", channel.Name);
-            // Não propaga — um canal com falha não bloqueia os outros
         }
     }
+
     private static AlertNotification BuildNotification(GrafanaWebhookPayload payload)
     {
         var alerts = payload.AlertsList;
         var isFiring = alerts.Any(a => a.Status == "firing");
         var state = isFiring ? "firing" : "resolved";
-        var severity = payload.Title.ToLowerInvariant() switch
+
+        var first = alerts.FirstOrDefault();
+        var labels = first?.Labels ?? new Dictionary<string, string>();
+        var annotations = first?.Annotations ?? new Dictionary<string, string>();
+
+        var alertName = labels.GetValueOrDefault("rulename")
+            ?? labels.GetValueOrDefault("alertname")
+            ?? payload.Title;
+        var service = labels.GetValueOrDefault("service");
+        var folder = labels.GetValueOrDefault("grafana_folder");
+        var severityLabel = labels.GetValueOrDefault("severity", "info");
+        var severity = severityLabel.ToLowerInvariant() switch
         {
-            var t when t.Contains("down") || t.Contains("critical") => AlertSeverity.Critical,
-            var t when t.Contains("memory") || t.Contains("queue") || t.Contains("error") => AlertSeverity.Warning,
+            "critical" => AlertSeverity.Critical,
+            "warning" => AlertSeverity.Warning,
             _ => AlertSeverity.Info
         };
-        // Formata o body com detalhes de cada alerta
-        var details = alerts
-            .Select(a =>
+
+        var statusEmoji = state == "resolved" ? "✅" : "🔥";
+        var severityEmoji = severity switch
+        {
+            AlertSeverity.Critical => "🔴",
+            AlertSeverity.Warning => "🟡",
+            _ => "🔵"
+        };
+        var statusLabel = state == "resolved" ? "RESOLVIDO" : "DISPARADO";
+
+        var titleParts = new List<string> { alertName };
+        if (!string.IsNullOrWhiteSpace(service)) titleParts.Add($"({service})");
+        var title = string.Join(" ", titleParts);
+
+        var bodyLines = new List<string>
+        {
+            $"{statusEmoji} {statusLabel} {severityEmoji} {severityLabel.ToUpperInvariant()}"
+        };
+
+        var summary = annotations.GetValueOrDefault("summary");
+        if (!string.IsNullOrWhiteSpace(summary) && !summary.Contains("[no value]"))
+            bodyLines.Add($"Resumo: {summary}");
+
+        var description = annotations.GetValueOrDefault("description");
+        if (!string.IsNullOrWhiteSpace(description) && description != summary)
+            bodyLines.Add($"Descrição: {description}");
+
+        if (!string.IsNullOrWhiteSpace(service))
+            bodyLines.Add($"Serviço: {service}");
+        if (!string.IsNullOrWhiteSpace(folder))
+            bodyLines.Add($"Pasta Grafana: {folder}");
+
+        var ruleId = labels.GetValueOrDefault("ref_id");
+        if (!string.IsNullOrWhiteSpace(ruleId))
+            bodyLines.Add($"Query ref: {ruleId}");
+
+        if (first?.StartsAt is { } startsAt)
+            bodyLines.Add($"Desde: {startsAt:dd/MM/yyyy HH:mm:ss} UTC");
+
+        if (!string.IsNullOrWhiteSpace(first?.GeneratorURL))
+            bodyLines.Add($"Painel: {first.GeneratorURL}");
+
+        if (alerts.Count > 1)
+        {
+            bodyLines.Add($"--- {alerts.Count} alertas neste grupo ---");
+            foreach (var a in alerts)
             {
-                var labels = string.Join(", ", (a.Labels ?? new Dictionary<string, string>())
-                    .Select(kv => $"{kv.Key}={kv.Value}"));
-                return $"- [{a.Status.ToUpper()}] {labels}";
-            });
-        var body = string.IsNullOrWhiteSpace(payload.Message)
-            ? string.Join("\n", details)
-            : $"{payload.Message}\n\n{string.Join("\n", details)}";
+                var aName = a.Labels?.GetValueOrDefault("rulename")
+                    ?? a.Labels?.GetValueOrDefault("alertname")
+                    ?? "alerta";
+                var aSeverity = a.Labels?.GetValueOrDefault("severity") ?? "info";
+                bodyLines.Add($"• [{a.Status.ToUpperInvariant()}] {aName} ({aSeverity})");
+            }
+        }
+
+        var body = string.Join("\n", bodyLines);
+
         return new AlertNotification(
-            Title: payload.Title,
+            Title: title,
             Body: body,
             Severity: severity,
             State: state,
-            FiredAt: alerts.FirstOrDefault()?.StartsAt ?? DateTimeOffset.UtcNow
+            FiredAt: first?.StartsAt ?? DateTimeOffset.UtcNow
         );
     }
 }

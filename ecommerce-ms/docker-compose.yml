@@ -16,6 +16,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+
   # ─── Databases ──────────────────────────────────────────────────────────────
   customers-db:
     image: postgres:16-alpine
@@ -127,7 +128,7 @@ services:
       - rabbitmq-exporter
       - redis-exporter
 
-  # ─── K6 Load Testing (alimenta o Grafana único via datasource InfluxDB-k6) ────
+  # ─── K6 Load Testing ──────────────────────────────────────────────────────────
   influxdb:
     image: influxdb:1.8-alpine
     container_name: k6-influxdb
@@ -166,30 +167,67 @@ services:
       loki: { condition: service_healthy }
     restart: unless-stopped
 
+  # ─── AI Local (Ollama) ────────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports: ["11434:11434"]
+    volumes: [ollama_data:/root/.ollama]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+    # Se tiver GPU NVIDIA, descomente:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Baixa o modelo uma vez e sai — idempotente, pode rodar sempre
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-init
+    depends_on:
+      ollama: { condition: service_healthy }
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "llama3.2:3b"]
+    restart: "no"
+
+  # ─── Alert Service / Incident Gateway ─────────────────────────────────────────
   alert-service:
     build:
       context: ./alert-service
       dockerfile: Dockerfile
     container_name: alert-service
+    depends_on:
+      loki:    { condition: service_healthy }
+      ollama:  { condition: service_healthy }
     environment:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: Production
 
-      # Webhook secret (mesmo valor do grafana-alerts.yaml)
+      # ── Webhook ───────────────────────────────────────────────────────────
       Webhook__Secret: TROQUE_POR_UM_TOKEN_SEGURO
 
-      # ── Telegram ────────────────────────────────────────────────────────────
+      # ── Telegram ──────────────────────────────────────────────────────────
       Channels__Telegram__BotToken: "8503051121:AAGU0eL0QrOK0O3n_35-VVu6cK_N8zS2MHQ"
       Channels__Telegram__ChatId: "7089189189"
 
-      # ── WhatsApp (Evolution API) ─────────────────────────────────────────
+      # ── WhatsApp (Evolution API) ───────────────────────────────────────────
       Channels__WhatsApp__Provider: evolution
       Channels__WhatsApp__EvolutionBaseUrl: http://evolution-api:8080
       Channels__WhatsApp__EvolutionApiKey: ${EVOLUTION_API_KEY}
       Channels__WhatsApp__EvolutionInstance: cardipio
       Channels__WhatsApp__Numbers: ${WHATSAPP_NUMBERS}
 
-      # ── Email ────────────────────────────────────────────────────────────
+      # ── Email ─────────────────────────────────────────────────────────────
       Channels__Email__SmtpHost: smtp.gmail.com
       Channels__Email__SmtpPort: 587
       Channels__Email__Username: ${EMAIL_USERNAME}
@@ -197,24 +235,35 @@ services:
       Channels__Email__FromAddress: ${EMAIL_USERNAME}
       Channels__Email__ToAddresses: ${EMAIL_TO_ADDRESSES}
 
+      # ── Feature Flags (tudo false = modo legacy, sem risco) ───────────────
+      FeatureFlags__AiEnabled: "false"
+      FeatureFlags__LokiEnrichmentEnabled: "false"
+      FeatureFlags__PrometheusEnrichmentEnabled: "false"
+      FeatureFlags__EnrichmentTimeoutSeconds: "15"
+
+      # ── Enrichment endpoints ──────────────────────────────────────────────
+      Enrichment__Loki__BaseUrl: http://loki:3100
+      Enrichment__Loki__TimeoutSec: "8"
+      Enrichment__Loki__QueryLimitLines: "100"
+      Enrichment__Prometheus__BaseUrl: http://prometheus:9090
+      Enrichment__Prometheus__TimeoutSec: "8"
+      Enrichment__Ollama__BaseUrl: http://ollama:11434
+      Enrichment__Ollama__Model: llama3.2:3b
+      Enrichment__Ollama__TimeoutSec: "25"
+
     ports: ["5005:8080"]
     restart: unless-stopped
 
-  # ── Evolution API (WhatsApp) ─────────────────────────────────────────────
-  # Só precisa se usar WhatsApp via Evolution API
-  # Se usar Z-API, remova este bloco — Z-API é cloud, não precisa de container
+  # ── Evolution API (WhatsApp) ───────────────────────────────────────────────
   evolution-api:
     container_name: evolution-api
     depends_on:
-      redis:
-        condition: service_healthy
-        required: true
-      evolution-db:
-        condition: service_healthy
-        required: true
+      redis:        { condition: service_healthy }
+      evolution-db: { condition: service_healthy }
     environment:
       AUTHENTICATION_API_KEY: minha-api-key-super-secreta
       CONFIG_SESSION_PHONE_VERSION: "2.3000.1020885143"
+      QRCODE_LIMIT: "30"
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
       DATABASE_CONNECTION_URI: postgresql://evolution:evolution123@evolution-db:5432/evolution
@@ -230,15 +279,8 @@ services:
       CACHE_LOCAL_ENABLED: "false"
       SERVER_URL: http://evolution-api:8080
     image: atendai/evolution-api:latest
-    networks:
-      default: null
-    ports:
-      - mode: ingress
-        target: 8080
-        published: "8081"
-        protocol: tcp
+    ports: ["8081:8080"]
     restart: unless-stopped
-
 
   grafana:
     image: grafana/grafana:11.4.0
@@ -252,7 +294,7 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - "./monitoring/grafana/provisioning:/etc/grafana/provisioning"
-     # - "./alert-service/grafana-alerts.yaml:/etc/grafana/provisioning/alerting/alerts.yaml"
+      # - "./alert-service/grafana-alerts.yaml:/etc/grafana/provisioning/alerting/alerts.yaml"
     ports: ["3000:3000"]
     depends_on:
       prometheus: { condition: service_started }
@@ -338,15 +380,6 @@ services:
       rabbitmq:         { condition: service_healthy }
     restart: unless-stopped
 
- 
-  evolution-manager:
-    image: atendai/evolution-manager:latest
-    container_name: evolution-manager
-    ports: ["8082:80"]
-    depends_on:
-      - evolution-api
-    restart: unless-stopped
-    
 volumes:
   customers_data:
   products_data:
@@ -357,3 +390,4 @@ volumes:
   k6_influxdb_data:
   loki_data:
   evolution_db_data:
+  ollama_data:
