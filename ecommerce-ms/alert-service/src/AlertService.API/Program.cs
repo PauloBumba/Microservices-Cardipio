@@ -1,10 +1,12 @@
 using AlertService.Core;
 using AlertService.Infrastructure;
+using AlertService.Infrastructure.MCP;
+using ModelContextProtocol.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new() { Title = "Customer API", Version = "v1" }));
-// ── Serilog ───────────────────────────────────────────────────────────────────
+builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new() { Title = "Alert Service / Incident Gateway", Version = "v2" }));
+
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -13,28 +15,38 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// ── Serviços ──────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddSingleton<AlertDispatcher>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// ── MCP Server: expõe tools para agentes externos (Cursor, Claude, etc.) ─────
+var mcpServerEnabled = builder.Configuration.GetValue<bool>("FeatureFlags:McpServerEnabled");
+if (mcpServerEnabled)
+{
+    builder.Services
+        .AddMcpServer()
+        .WithHttpTransport(options => options.Stateless = true)
+        .WithTools<IncidentMcpTools>();
+}
+
 var app = builder.Build();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Customer API v1"));
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Incident Gateway v2"));
 app.UseSerilogRequestLogging();
 app.MapControllers();
 
+if (mcpServerEnabled)
+    app.MapMcp("/mcp");
 
 app.MapGet("/", () => Results.Ok(new
 {
-    Service = "Customer Service",
+    Service = "Alert Service / Incident Gateway",
     Status = "Running",
-    Version = "1.0.0",
+    Version = "2.1.0",
     Swagger = "/swagger",
-
-  
+    McpEndpoint = mcpServerEnabled ? "/mcp" : null,
     Timestamp = DateTime.UtcNow
 }));
-Log.Information("🚨 AlertService iniciado na porta {Port}", 
-    builder.Configuration["ASPNETCORE_URLS"] ?? "8080");
 
+Log.Information("🚨 AlertService (Incident Gateway v2.1) iniciado — MCP Server: {McpEnabled}", mcpServerEnabled);
 app.Run();

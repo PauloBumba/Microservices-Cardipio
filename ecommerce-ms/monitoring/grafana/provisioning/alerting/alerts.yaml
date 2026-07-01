@@ -65,6 +65,7 @@ groups:
         for: 30s
         labels:
           severity: critical
+          service: "{{ $labels.job }}"
         annotations:
           summary: "Servico {{ $labels.job }} esta DOWN"
 
@@ -101,6 +102,7 @@ groups:
         for: 1m
         labels:
           severity: warning
+          service: "{{ $labels.job }}"
         annotations:
           summary: "Error rate alta no {{ $labels.job }}"
 

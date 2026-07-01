@@ -168,37 +168,50 @@ services:
     restart: unless-stopped
 
   # ─── AI Local (Ollama) ────────────────────────────────────────────────────────
-  ollama:
+  ollama-service:
     image: ollama/ollama:latest
-    container_name: ollama
+    container_name: ollama-service
+    volumes:
+      - ollama_data:/root/.ollama
     ports: ["11434:11434"]
-    volumes: [ollama_data:/root/.ollama]
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ─── MCP: Grafana observability server ───────────────────────────────────────
+  mcp-grafana:
+    image: grafana/mcp-grafana:latest
+    container_name: mcp-grafana
+    command:
+      - "-t"
+      - "streamable-http"
+      - "--disable-write"
+      - "--disable-dashboard"
+      - "--disable-alerting"
+      - "--disable-incident"
+      - "--disable-oncall"
+      - "--disable-navigation"
+      - "--disable-rendering"
+      - "--disable-sift"
+      - "--disable-search"
+    environment:
+      GRAFANA_URL: http://grafana:3000
+      GRAFANA_USERNAME: admin
+      GRAFANA_PASSWORD: admin123
+    ports: ["8000:8000"]
+    depends_on:
+      grafana: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/healthz || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 10
       start_period: 20s
     restart: unless-stopped
-    # Se tiver GPU NVIDIA, descomente:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
-
-  # Baixa o modelo uma vez e sai — idempotente, pode rodar sempre
-  ollama-init:
-    image: ollama/ollama:latest
-    container_name: ollama-init
-    depends_on:
-      ollama: { condition: service_healthy }
-    environment:
-      OLLAMA_HOST: http://ollama:11434
-    entrypoint: ["ollama", "pull", "llama3.2:3b"]
-    restart: "no"
 
   # ─── Alert Service / Incident Gateway ─────────────────────────────────────────
   alert-service:
@@ -207,8 +220,10 @@ services:
       dockerfile: Dockerfile
     container_name: alert-service
     depends_on:
-      loki:    { condition: service_healthy }
-      ollama:  { condition: service_healthy }
+      loki:         { condition: service_healthy }
+      ollama-service: { condition: service_healthy }
+      mcp-grafana:  { condition: service_healthy }
+      grafana:      { condition: service_healthy }
     environment:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: Production
@@ -235,19 +250,27 @@ services:
       Channels__Email__FromAddress: ${EMAIL_USERNAME}
       Channels__Email__ToAddresses: ${EMAIL_TO_ADDRESSES}
 
-      # ── Feature Flags (tudo false = modo legacy, sem risco) ───────────────
+      # ── Feature Flags ─────────────────────────────────────────────────────
       FeatureFlags__AiEnabled: "false"
       FeatureFlags__LokiEnrichmentEnabled: "false"
       FeatureFlags__PrometheusEnrichmentEnabled: "false"
-      FeatureFlags__EnrichmentTimeoutSeconds: "15"
+      FeatureFlags__McpEnrichmentEnabled: "true"
+      FeatureFlags__McpServerEnabled: "true"
+      FeatureFlags__EnrichmentTimeoutSeconds: "20"
 
-      # ── Enrichment endpoints ──────────────────────────────────────────────
+      # ── MCP (grafana/mcp-grafana) ─────────────────────────────────────────
+      Mcp__GrafanaMcpBaseUrl: http://mcp-grafana:8000
+      Mcp__LokiDatasourceUid: loki
+      Mcp__PrometheusDatasourceUid: prometheus
+      Mcp__TimeoutSec: "15"
+
+      # ── Enrichment endpoints (fallback HTTP direto) ───────────────────────
       Enrichment__Loki__BaseUrl: http://loki:3100
       Enrichment__Loki__TimeoutSec: "8"
       Enrichment__Loki__QueryLimitLines: "100"
       Enrichment__Prometheus__BaseUrl: http://prometheus:9090
       Enrichment__Prometheus__TimeoutSec: "8"
-      Enrichment__Ollama__BaseUrl: http://ollama:11434
+      Enrichment__Ollama__BaseUrl: http://ollama-service:11434
       Enrichment__Ollama__Model: llama3.2:3b
       Enrichment__Ollama__TimeoutSec: "25"
 

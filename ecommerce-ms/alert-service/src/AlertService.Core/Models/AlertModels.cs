@@ -34,7 +34,8 @@ public sealed record AlertNotification(
     string Body,
     AlertSeverity Severity,
     string State,           // "firing" | "resolved"
-    DateTimeOffset FiredAt
+    DateTimeOffset FiredAt,
+    IncidentContext? IncidentContext = null
 );
 
 public enum AlertSeverity { Critical, Warning, Info }
