@@ -25,4 +25,16 @@ public sealed class OrderItem : Entity
             UnitPrice=unitPrice, Currency=currency
         };
     }
+
+    public OrderItem(Guid id, Guid productId, string productName, string sku, int qty, decimal unitPrice)
+    {
+        Id = id;
+        ProductId = productId;
+        ProductName = productName;
+        Sku = sku;
+        Quantity = qty;
+        UnitPrice = unitPrice;
+    }
+
+    public decimal Subtotal => UnitPrice * Quantity;
 }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Shared.Infrastructure.Outbox;
+using OutboxMessage = Shared.Infrastructure.Outbox.OutboxMessage;
 
 namespace Customer.Infrastructure.Outbox;
 
@@ -23,18 +24,26 @@ public sealed class CustomerOutboxProcessor(IServiceProvider services, ILogger<C
     protected override async Task MarkProcessedAsync(IServiceProvider sp, OutboxMessage msg, CancellationToken ct)
     {
         var db = sp.GetRequiredService<CustomerDbContext>();
-        msg.ProcessedAt = DateTime.UtcNow;
-        msg.Status = OutboxMessageStatus.Processed;
-        msg.IsProcessing = false;
-        await db.SaveChangesAsync(ct);
+        var entity = await db.OutboxMessages.FindAsync([msg.Id], ct);
+        if (entity is not null)
+        {
+            entity.ProcessedAt = DateTime.UtcNow;
+            entity.Status = OutboxMessageStatus.Processed;
+            entity.IsProcessing = false;
+            await db.SaveChangesAsync(ct);
+        }
     }
 
     protected override async Task IncrementRetryAsync(IServiceProvider sp, OutboxMessage msg, string error, CancellationToken ct)
     {
         var db = sp.GetRequiredService<CustomerDbContext>();
-        msg.Error = error;
-        msg.IsProcessing = false;
-        await db.SaveChangesAsync(ct);
+        var entity = await db.OutboxMessages.FindAsync([msg.Id], ct);
+        if (entity is not null)
+        {
+            entity.Error = error;
+            entity.IsProcessing = false;
+            await db.SaveChangesAsync(ct);
+        }
     }
 
     protected override async Task<bool> TryLockAsync(IServiceProvider sp, Guid messageId, CancellationToken ct)

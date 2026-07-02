@@ -47,6 +47,14 @@ public sealed class Orders : AggregateRoot
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void Cancel(string reason)
+    {
+        if (Status == OrderStatus.Cancelled) throw new OrderDomainException("Pedido já cancelado.");
+        Status = OrderStatus.Cancelled;
+        UpdatedAt = DateTime.UtcNow;
+        Raise(new OrderCancelledDomainEvent(Id, OrderNumber, CustomerId, reason));
+    }
+
     public void Confirm()
     {
         if (Status != OrderStatus.Pending) throw new OrderDomainException("Apenas pedidos pendentes podem ser confirmados.");
@@ -56,32 +64,6 @@ public sealed class Orders : AggregateRoot
         Raise(new OrderConfirmedDomainEvent(Id, OrderNumber));
     }
 
-    public void Cancel(string reason)
-    {
-        if (Status == OrderStatus.Cancelled) throw new OrderDomainException("Pedido já cancelado.");
-        Status = OrderStatus.Cancelled;
-        UpdatedAt = DateTime.UtcNow;
-        Raise(new OrderCancelledDomainEvent(Id, OrderNumber, reason));
-    }
-
     private static string GenerateOrderNumber() =>
         $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpperInvariant()}";
-}
-
-public sealed class OrderItem
-{
-    public Guid Id { get; init; }
-    public Guid ProductId { get; init; }
-    public string ProductName { get; init; } = null!;
-    public string Sku { get; init; } = null!;
-    public int Quantity { get; init; }
-    public decimal UnitPrice { get; init; }
-    public decimal Subtotal => Quantity * UnitPrice;
-
-    public OrderItem(Guid id, Guid productId, string productName, string sku, int qty, decimal unitPrice)
-    {
-        Id = id; ProductId = productId; ProductName = productName;
-        Sku = sku; Quantity = qty; UnitPrice = unitPrice;
-    }
-    private OrderItem() { }
 }

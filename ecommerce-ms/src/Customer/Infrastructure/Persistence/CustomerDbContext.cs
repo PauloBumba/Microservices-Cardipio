@@ -1,6 +1,5 @@
 using Customer.Domain.Entities;
 using Customer.Infrastructure.Idempotency;
-using Customer.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Shared.Application.Behaviors;
 using Shared.Infrastructure.Outbox;

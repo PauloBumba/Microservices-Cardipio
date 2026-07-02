@@ -1,5 +1,6 @@
 using Customer.Domain.Entities;
-namespace Customer.Domain.Repositories;
+
+namespace Customer.Application.Repositories;
 public interface ICustomerRepository
 {
     Task<Customerss?> GetByIdAsync(Guid id, CancellationToken ct = default);

@@ -1,4 +1,4 @@
-using Customer.Domain.Repositories;
+using Customer.Application.Repositories;
 using Customer.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 namespace Customer.Infrastructure.Repositories;

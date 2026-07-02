@@ -34,7 +34,8 @@ public sealed class ProductsController(ISender sender) : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateProductCommand cmd, CancellationToken ct=default)
     {
         var p = await sender.Send(cmd, ct);
-        return CreatedAtAction(nameof(GetById), new { id = p.Id }, p);
+        if (!p.IsSuccess) return BadRequest(p.Errors);
+        return CreatedAtAction(nameof(GetById), new { id = p.Data }, p.Data);
     }
 
     [HttpPost("{id:guid}/stock/add")]

@@ -1,2 +1,10 @@
 namespace Order.Domain.Enums;
-public enum OrderStatus { Pending, Confirmed, Processing, Shipped, Delivered, Cancelled }
+
+public enum OrderStatus
+{
+    Pending,
+    Confirmed,
+    Cancelled,
+    Shipped,
+    Delivered
+}

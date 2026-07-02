@@ -6,3 +6,7 @@ public sealed record ProductDto(
     int StockQuantity, int ReservedQuantity, int AvailableQuantity,
     string Category, bool IsActive,
     DateTime CreatedAt, DateTime UpdatedAt);
+
+public sealed record StockInfoDto(int StockQuantity, int ReservedQuantity, int AvailableQuantity);
+
+public sealed record PagedResult<T>(IEnumerable<T> Items, int TotalCount, int Page, int PageSize);

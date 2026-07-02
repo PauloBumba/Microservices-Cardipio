@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Order.Infrastructure.Idempotency;
 using Order.Infrastructure.Persistence;
 using Shared.Infrastructure.Outbox;
+using OutboxMessage = Shared.Infrastructure.Outbox.OutboxMessage;
 
 namespace Order.Infrastructure.Outbox;
 
@@ -16,10 +17,29 @@ public sealed class OrderOutboxProcessor(IServiceProvider services, ILogger<Orde
             .OrderBy(m => m.CreatedAt).Take(batchSize).ToListAsync(ct);
 
     protected override async Task MarkProcessedAsync(IServiceProvider sp, OutboxMessage msg, CancellationToken ct)
-    { msg.ProcessedAt = DateTime.UtcNow; msg.Status = OutboxMessageStatus.Processed; msg.IsProcessing = false; await sp.GetRequiredService<OrderDbContext>().SaveChangesAsync(ct); }
+    {
+        var db = sp.GetRequiredService<OrderDbContext>();
+        var entity = await db.OutboxMessages.FindAsync([msg.Id], ct);
+        if (entity is not null)
+        {
+            entity.ProcessedAt = DateTime.UtcNow;
+            entity.Status = OutboxMessageStatus.Processed;
+            entity.IsProcessing = false;
+            await db.SaveChangesAsync(ct);
+        }
+    }
 
     protected override async Task IncrementRetryAsync(IServiceProvider sp, OutboxMessage msg, string error, CancellationToken ct)
-    { msg.Error = error; msg.IsProcessing = false; await sp.GetRequiredService<OrderDbContext>().SaveChangesAsync(ct); }
+    {
+        var db = sp.GetRequiredService<OrderDbContext>();
+        var entity = await db.OutboxMessages.FindAsync([msg.Id], ct);
+        if (entity is not null)
+        {
+            entity.Error = error;
+            entity.IsProcessing = false;
+            await db.SaveChangesAsync(ct);
+        }
+    }
 
     protected override async Task<bool> TryLockAsync(IServiceProvider sp, Guid messageId, CancellationToken ct)
     {

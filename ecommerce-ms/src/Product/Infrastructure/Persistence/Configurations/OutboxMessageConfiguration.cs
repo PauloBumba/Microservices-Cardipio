@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Product.Infrastructure.Outbox;
+using Shared.Infrastructure.Outbox;
 
 namespace Product.Infrastructure.Persistence.Configurations;
 

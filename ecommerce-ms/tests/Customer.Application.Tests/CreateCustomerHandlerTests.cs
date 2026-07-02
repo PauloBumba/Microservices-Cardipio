@@ -1,6 +1,6 @@
 using Customer.Application.Features.Customers.Commands.CreateCustomer;
+using Customer.Application.Repositories;
 using Customer.Domain.Entities;
-using Customer.Domain.Repositories;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -11,11 +11,9 @@ namespace Customer.Application.Tests;
 public class CreateCustomerHandlerTests
 {
     private readonly Mock<ICustomerRepository> _repo = new();
-    private readonly Mock<IUnitOfWork> _uow = new();
 
     private CreateCustomerHandler BuildHandler() =>
-        new(_repo.Object, _uow.Object,
-            NullLogger<CreateCustomerHandler>.Instance);
+        new(_repo.Object, NullLogger<CreateCustomerHandler>.Instance);
 
     private static CreateCustomerCommand ValidCommand() => new(
         "João Silva", "joao@email.com", "+5549999999999",
@@ -31,11 +29,15 @@ public class CreateCustomerHandlerTests
         var result = await handler.Handle(ValidCommand(), CancellationToken.None);
 
         result.Should().NotBeNull();
-        result.Name.Should().Be("João Silva");
-        result.Email.Should().Be("joao@email.com");
+        result.IsSuccess.Should().BeTrue();
+        result.Data.Should().NotBeEmpty();
 
-        _repo.Verify(r => r.AddAsync(It.IsAny<Customerss>(), It.IsAny<CancellationToken>()), Times.Once);
-        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _repo.Verify(r => r.AddAsync(
+            It.Is<Customerss>(c =>
+                c.Name == "João Silva" &&
+                c.Email.Value == "joao@email.com"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -47,10 +49,10 @@ public class CreateCustomerHandlerTests
         var handler = BuildHandler();
         var act = async () => await handler.Handle(ValidCommand(), CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*já cadastrado*");
+        var result = await act();
 
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.Contains("já cadastrado"));
         _repo.Verify(r => r.AddAsync(It.IsAny<Customerss>(), It.IsAny<CancellationToken>()), Times.Never);
-        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 }
