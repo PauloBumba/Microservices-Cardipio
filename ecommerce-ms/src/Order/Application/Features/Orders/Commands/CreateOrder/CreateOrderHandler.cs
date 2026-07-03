@@ -1,8 +1,8 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Order.Application.Repositories;
-using Order.Domain.Entities;
 using Shared.Application.Response;
+using DomainOrder = Order.Domain.Entities.Orders;
 
 namespace Order.Application.Features.Orders.Commands.CreateOrder;
 
@@ -16,7 +16,7 @@ public sealed class CreateOrderHandler(
         if (cmd.Items.Count == 0)
             return ApiResponse<Guid>.Fail("O pedido deve ter ao menos um item.");
 
-        var order = Orders.Create(cmd.CustomerId);
+        var order = DomainOrder.Create(cmd.CustomerId);
 
         foreach (var item in cmd.Items)
             order.AddItem(item.ProductId, item.ProductName, item.Sku,

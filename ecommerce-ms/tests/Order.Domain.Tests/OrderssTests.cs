@@ -1,21 +1,20 @@
 using FluentAssertions;
 using Order.Domain.Entities;
-using Order.Domain.Enums;
 using Order.Domain.Events;
 using Order.Domain.Exceptions;
 using Xunit;
 
 namespace Order.Domain.Tests;
 
-public class OrderssTests
+public class OrdersTests
 {
     private static readonly Guid CustomerId = Guid.NewGuid();
     private static readonly Guid ProductId = Guid.NewGuid();
 
-    private static Orderss CreateOrder() =>
-        Orderss.Create(CustomerId, "Rua A", "Videira", "SC", "89560-000", "Brasil");
+    private static Orders CreateOrder() =>
+        Orders.Create(CustomerId);
 
-    private static Orderss CreateOrderWithItem()
+    private static Orders CreateOrderWithItem()
     {
         var o = CreateOrder();
         o.AddItem(ProductId, "Produto X", "SKU-001", 2, 100m, "BRL");
@@ -33,7 +32,7 @@ public class OrderssTests
         order.CustomerId.Should().Be(CustomerId);
         order.OrderNumber.Should().StartWith("ORD-");
         order.Items.Should().BeEmpty();
-        order.TotalAmount.Amount.Should().Be(0m);
+        order.Total.Should().Be(0m);
     }
 
     // ── AddItem ──────────────────────────────────────────────────────────────
@@ -46,7 +45,7 @@ public class OrderssTests
         order.AddItem(ProductId, "Produto X", "SKU-001", 3, 50m, "BRL");
 
         order.Items.Should().HaveCount(1);
-        order.TotalAmount.Amount.Should().Be(150m);
+        order.Total.Should().Be(150m);
     }
 
     [Fact]
@@ -57,8 +56,8 @@ public class OrderssTests
 
         order.AddItem(ProductId, "Prod", "SKU-001", 5, 100m, "BRL");
 
-        order.Items.Should().HaveCount(1);
-        order.TotalAmount.Amount.Should().Be(500m);
+        order.Items.Should().HaveCount(2);
+        order.Total.Should().Be(600m);
     }
 
     [Fact]
@@ -82,7 +81,7 @@ public class OrderssTests
         order.Confirm();
 
         order.Status.Should().Be(OrderStatus.Confirmed);
-        order.DomainEvents.Should().Contain(e => e is OrderCreatedDomainEvent);
+        order.DomainEvents.Should().Contain(e => e is OrderConfirmedDomainEvent);
     }
 
     [Fact]

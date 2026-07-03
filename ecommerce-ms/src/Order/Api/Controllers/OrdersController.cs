@@ -38,8 +38,11 @@ public sealed class OrdersController(ISender sender) : ControllerBase
     [ProducesResponseType(422)]
     public async Task<IActionResult> Create([FromBody] CreateOrderCommand cmd, CancellationToken ct=default)
     {
-        var order = await sender.Send(cmd, ct);
-        return CreatedAtAction(nameof(GetById), new { id = order.Id }, order);
+        var result = await sender.Send(cmd, ct);
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return CreatedAtAction(nameof(GetById), new { id = result.Data }, result);
     }
 
     [HttpPatch("{id:guid}/cancel")]

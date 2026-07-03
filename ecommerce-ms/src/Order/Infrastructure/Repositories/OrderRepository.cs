@@ -16,6 +16,25 @@ public sealed class OrderRepository(OrderDbContext db) : IOrderRepository
     public async Task<List<Orders>> GetByCustomerIdAsync(Guid customerId, CancellationToken ct = default) =>
         await db.Orders.Include(o => o.Items).Where(o => o.CustomerId == customerId).ToListAsync(ct);
 
+    public async Task<List<Orders>> GetByCustomerAsync(Guid customerId, int page, int size, CancellationToken ct = default) =>
+        await db.Orders.Include(o => o.Items)
+            .Where(o => o.CustomerId == customerId)
+            .Skip((page - 1) * size)
+            .Take(size)
+            .ToListAsync(ct);
+
+    public async Task<int> CountByCustomerAsync(Guid customerId, CancellationToken ct = default) =>
+        await db.Orders.CountAsync(o => o.CustomerId == customerId, ct);
+
+    public async Task<List<Orders>> GetPagedAsync(int page, int size, CancellationToken ct = default) =>
+        await db.Orders.Include(o => o.Items)
+            .Skip((page - 1) * size)
+            .Take(size)
+            .ToListAsync(ct);
+
+    public async Task<int> CountAsync(CancellationToken ct = default) =>
+        await db.Orders.CountAsync(ct);
+
     public async Task AddAsync(Orders order, CancellationToken ct = default) =>
         await db.Orders.AddAsync(order, ct);
 }

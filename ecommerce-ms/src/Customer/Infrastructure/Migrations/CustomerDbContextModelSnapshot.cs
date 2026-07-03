@@ -29,6 +29,9 @@ namespace Customer.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<int>("AggregateVersion")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -55,7 +58,25 @@ namespace Customer.Infrastructure.Migrations
                     b.ToTable("customers", (string)null);
                 });
 
-            modelBuilder.Entity("Customer.Infrastructure.Outbox.OutboxMessage", b =>
+            modelBuilder.Entity("Customer.Infrastructure.Idempotency.CustomerProcessedEvent", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("EventId");
+
+                    b.ToTable("ProcessedEvents", (string)null);
+                });
+
+            modelBuilder.Entity("Shared.Infrastructure.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -70,6 +91,12 @@ namespace Customer.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("error");
+
+                    b.Property<bool>("IsProcessing")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LockedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Payload")
                         .IsRequired()
@@ -86,6 +113,10 @@ namespace Customer.Infrastructure.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("retry_count");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -98,7 +129,7 @@ namespace Customer.Infrastructure.Migrations
                         .HasDatabaseName("ix_outbox_unprocessed")
                         .HasFilter("processed_at IS NULL AND retry_count < 5");
 
-                    b.ToTable("outbox_messages", (string)null);
+                    b.ToTable("OutboxMessages", (string)null);
                 });
 
             modelBuilder.Entity("Customer.Domain.Entities.Customerss", b =>

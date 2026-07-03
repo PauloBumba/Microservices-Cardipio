@@ -21,17 +21,6 @@ public class OrderDbContext(DbContextOptions<OrderDbContext> options)
         mb.ApplyConfigurationsFromAssembly(typeof(OrderDbContext).Assembly);
         mb.Entity<OutboxMessage>(e => { e.ToTable("OutboxMessages"); e.HasKey(x => x.Id); e.Property(x => x.Status).HasConversion<string>(); });
         mb.Entity<OrderProcessedEvent>(e => { e.ToTable("ProcessedEvents"); e.HasKey(x => x.EventId); });
-        mb.Entity<Orders>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Status).HasConversion<string>();
-            e.OwnsMany(x => x.Items, item =>
-            {
-                item.ToTable("OrderItems");
-                item.HasKey(i => i.Id);
-                item.Property(i => i.Subtotal).HasComputedColumnSql("\"Quantity\" * \"UnitPrice\"", stored: true);
-            });
-        });
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)

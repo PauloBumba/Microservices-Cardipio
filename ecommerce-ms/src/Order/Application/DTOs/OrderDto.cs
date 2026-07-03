@@ -8,3 +8,5 @@ public sealed record OrderDto(
 public sealed record OrderItemDto(
     Guid ProductId, string ProductName, string Sku,
     int Quantity, decimal UnitPrice, decimal Subtotal);
+
+public sealed record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount, int Page, int PageSize);

@@ -74,25 +74,29 @@ namespace Order.Infrastructure.Migrations
                     b.ToTable("order_items", (string)null);
                 });
 
-            modelBuilder.Entity("Order.Domain.Entities.Orderss", b =>
+            modelBuilder.Entity("Order.Domain.Entities.Orders", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<int>("AggregateVersion")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("currency");
+
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid")
                         .HasColumnName("customer_id");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("notes");
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
@@ -104,6 +108,11 @@ namespace Order.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("status");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -124,7 +133,25 @@ namespace Order.Infrastructure.Migrations
                     b.ToTable("orders", (string)null);
                 });
 
-            modelBuilder.Entity("Order.Infrastructure.Outbox.OutboxMessage", b =>
+            modelBuilder.Entity("Order.Infrastructure.Idempotency.OrderProcessedEvent", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("EventId");
+
+                    b.ToTable("ProcessedEvents", (string)null);
+                });
+
+            modelBuilder.Entity("Shared.Infrastructure.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -139,6 +166,12 @@ namespace Order.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("error");
+
+                    b.Property<bool>("IsProcessing")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LockedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Payload")
                         .IsRequired()
@@ -155,6 +188,10 @@ namespace Order.Infrastructure.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("retry_count");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -167,95 +204,19 @@ namespace Order.Infrastructure.Migrations
                         .HasDatabaseName("ix_outbox_unprocessed")
                         .HasFilter("processed_at IS NULL AND retry_count < 5");
 
-                    b.ToTable("outbox_messages", (string)null);
+                    b.ToTable("OutboxMessages", (string)null);
                 });
 
             modelBuilder.Entity("Order.Domain.Entities.OrderItem", b =>
                 {
-                    b.HasOne("Order.Domain.Entities.Orderss", null)
+                    b.HasOne("Order.Domain.Entities.Orders", null)
                         .WithMany("Items")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Order.Domain.Entities.Orderss", b =>
-                {
-                    b.OwnsOne("Order.Domain.ValueObjects.Address", "ShippingAddress", b1 =>
-                        {
-                            b1.Property<Guid>("OrderssId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("City")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("shipping_city");
-
-                            b1.Property<string>("Country")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("shipping_country");
-
-                            b1.Property<string>("State")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("shipping_state");
-
-                            b1.Property<string>("Street")
-                                .IsRequired()
-                                .HasMaxLength(300)
-                                .HasColumnType("character varying(300)")
-                                .HasColumnName("shipping_street");
-
-                            b1.Property<string>("ZipCode")
-                                .IsRequired()
-                                .HasMaxLength(20)
-                                .HasColumnType("character varying(20)")
-                                .HasColumnName("shipping_zip_code");
-
-                            b1.HasKey("OrderssId");
-
-                            b1.ToTable("orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderssId");
-                        });
-
-                    b.OwnsOne("Order.Domain.ValueObjects.Money", "TotalAmount", b1 =>
-                        {
-                            b1.Property<Guid>("OrderssId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<decimal>("Amount")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("numeric(18,2)")
-                                .HasColumnName("total_amount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("character varying(3)")
-                                .HasColumnName("total_currency");
-
-                            b1.HasKey("OrderssId");
-
-                            b1.ToTable("orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderssId");
-                        });
-
-                    b.Navigation("ShippingAddress")
-                        .IsRequired();
-
-                    b.Navigation("TotalAmount")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Order.Domain.Entities.Orderss", b =>
+            modelBuilder.Entity("Order.Domain.Entities.Orders", b =>
                 {
                     b.Navigation("Items");
                 });

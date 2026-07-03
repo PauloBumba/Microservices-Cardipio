@@ -1,7 +1,7 @@
 using MediatR;
 using Order.Application.DTOs;
 using Order.Application.Mappings;
-using Order.Domain.Repositories;
+using Order.Application.Repositories;
 namespace Order.Application.Features.Orders.Queries.GetOrdersByCustomer;
 public sealed class GetOrdersByCustomerHandler(IOrderRepository repo)
     : IRequestHandler<GetOrdersByCustomerQuery, PagedResult<OrderDto>>

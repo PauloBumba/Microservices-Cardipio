@@ -14,6 +14,7 @@ public sealed class ProductServiceClient(HttpClient http, ILogger<ProductService
             if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
             resp.EnsureSuccessStatusCode();
             return await resp.Content.ReadFromJsonAsync<ProductInfo>(cancellationToken: ct);
+            
         }
         catch (Exception ex) { logger.LogWarning(ex, "Falha ao consultar produto {Id}", productId); throw; }
     }

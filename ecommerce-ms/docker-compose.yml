@@ -183,6 +183,9 @@ services:
     restart: unless-stopped
 
   # ─── MCP: Grafana observability server ───────────────────────────────────────
+  # NOTA: healthcheck removido — a imagem grafana/mcp-grafana:latest não expõe
+  # um endpoint /healthz compatível (o servidor só serve o protocolo MCP em /mcp),
+  # o que fazia o wget do healthcheck falhar mesmo com o serviço rodando normalmente.
   mcp-grafana:
     image: grafana/mcp-grafana:latest
     container_name: mcp-grafana
@@ -205,12 +208,6 @@ services:
     ports: ["8000:8000"]
     depends_on:
       grafana: { condition: service_healthy }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/healthz || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
     restart: unless-stopped
 
   # ─── Alert Service / Incident Gateway ─────────────────────────────────────────
@@ -220,10 +217,10 @@ services:
       dockerfile: Dockerfile
     container_name: alert-service
     depends_on:
-      loki:         { condition: service_healthy }
+      loki:           { condition: service_healthy }
       ollama-service: { condition: service_healthy }
-      mcp-grafana:  { condition: service_healthy }
-      grafana:      { condition: service_healthy }
+      mcp-grafana:    { condition: service_started }
+      grafana:        { condition: service_healthy }
     environment:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: Production
