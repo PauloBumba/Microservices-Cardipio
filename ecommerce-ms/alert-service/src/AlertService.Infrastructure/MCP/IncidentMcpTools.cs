@@ -14,6 +14,7 @@ namespace AlertService.Infrastructure.MCP;
 [McpServerToolType]
 public sealed class IncidentMcpTools(
     IMcpObservabilityClient mcpClient,
+    IIncidentAiService aiService,
     IRecentIncidentStore incidentStore,
     FeatureFlags flags,
     ILogger<IncidentMcpTools> logger)
@@ -32,6 +33,8 @@ public sealed class IncidentMcpTools(
             i.Service,
             i.AlertFiredAt,
             i.EnrichmentSource,
+            Decision = i.AiAnalysis?.OperationalDecision.ToString(),
+            Confidence = i.AiAnalysis?.Confidence,
             LogCount = i.Logs.Count,
             AiSummary = i.AiAnalysis?.HumanSummary,
             RootCause = i.AiAnalysis?.RootCause
@@ -40,7 +43,7 @@ public sealed class IncidentMcpTools(
         return JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
     }
 
-    [McpServerTool, Description("Investiga um serviço consultando Loki e Prometheus via MCP (Grafana).")]
+    [McpServerTool, Description("Investiga um serviço consultando Loki e Prometheus via MCP e resume com LLM.")]
     public async Task<string> InvestigateService(
         [Description("Nome do serviço Docker Compose, ex: customer-service")] string service,
         CancellationToken cancellationToken = default)
@@ -56,10 +59,43 @@ public sealed class IncidentMcpTools(
             var logs    = await mcpClient.QueryLokiLogsAsync(service, from, to, 50, cancellationToken);
             var metrics = await mcpClient.GetServiceSnapshotAsync(service, from, to, cancellationToken);
 
+            var payload = new GrafanaWebhookPayload(
+                Title: $"Investigacao manual: {service}",
+                Message: "Solicitada via MCP",
+                State: "manual",
+                Alerts: [new GrafanaAlert(
+                    Status: "firing",
+                    Labels: new Dictionary<string, string> { ["service"] = service, ["severity"] = "info" },
+                    StartsAt: from)]);
+
+            var context = new IncidentContext
+            {
+                IncidentId = $"manual-{service}-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}",
+                OriginalPayload = payload,
+                Service = service,
+                AlertFiredAt = DateTimeOffset.UtcNow,
+                Logs = logs,
+                Metrics = metrics,
+                EnrichmentSource = "mcp"
+            };
+
+            var analysis = await aiService.AnalyzeAsync(context, cancellationToken);
+            context = context with { AiAnalysis = analysis };
+            incidentStore.Add(context);
+
             var result = new
             {
                 service,
                 window = new { from, to },
+                decision = analysis.OperationalDecision.ToString(),
+                confidence = analysis.Confidence,
+                summary = analysis.HumanSummary,
+                rootCause = analysis.RootCause,
+                probableCause = analysis.ProbableCause,
+                severity = analysis.Severity.ToString(),
+                impact = analysis.Impact,
+                evidence = analysis.Evidence,
+                suggestions = analysis.Suggestions,
                 logs = logs.Take(20).Select(l => new { l.Timestamp, l.Level, Message = Truncate(l.Message, 200) }),
                 metrics,
                 logCount = logs.Count

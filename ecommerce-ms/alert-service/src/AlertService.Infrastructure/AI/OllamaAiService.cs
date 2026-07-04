@@ -12,7 +12,7 @@ namespace AlertService.Infrastructure.AI;
 public sealed class OllamaOptions
 {
     public string BaseUrl    { get; set; } = "http://localhost:11434";
-    public string Model      { get; set; } = "llama3.2:1b";  // 1b é rápido; troque por mistral se tiver GPU
+    public string Model      { get; set; } = "llama3.2:1b";
     public int    TimeoutSec { get; set; } = 30;
 }
 
@@ -35,7 +35,7 @@ public sealed class OllamaAiService(
             Model  = options.Value.Model,
             Prompt = prompt,
             Stream = false,
-            Options = new OllamaModelOptions { Temperature = 0.1f } // baixa temp = mais determinístico
+            Options = new OllamaModelOptions { Temperature = 0.1f }
         };
 
         var content = new StringContent(
@@ -60,19 +60,21 @@ public sealed class OllamaAiService(
         return ParseAiResponse(raw.Response, context, options.Value.Model);
     }
 
-    // ── Prompt engineering ────────────────────────────────────────────────────
-
     private static string BuildPrompt(IncidentContext ctx)
     {
         var sb = new StringBuilder();
 
-        sb.AppendLine("Você é um SRE especialista. Analise o incidente abaixo e responda APENAS em JSON válido.");
+        sb.AppendLine("Você é um SRE especialista em aplicações distribuídas. Analise o incidente abaixo e responda APENAS em JSON válido.");
         sb.AppendLine("Formato obrigatório:");
         sb.AppendLine("""
         {
           "root_cause": "descrição técnica da causa raiz",
-          "probable_cause": "uma das opções: deploy | database | overload | network | memory_leak | external_dependency | configuration | unknown",
+          "probable_cause": "deploy | database | overload | network | memory_leak | external_dependency | configuration | unknown",
           "severity": "Low | Medium | High | Critical",
+          "operational_decision": "Ignore | Observe | Notify | Escalate",
+          "confidence": 0.0,
+          "impact": "impacto provável para usuário/sistema, máximo 1 frase",
+          "evidence": ["evidência objetiva 1", "evidência objetiva 2"],
           "human_summary": "resumo em português para o time, máximo 2 frases",
           "suggestions": ["ação 1", "ação 2", "ação 3"]
         }
@@ -109,9 +111,9 @@ public sealed class OllamaAiService(
 
         if (ctx.Logs.Count > 0)
         {
-            sb.AppendLine($"## LOGS DE ERRO ({Math.Min(ctx.Logs.Count, 10)} de {ctx.Logs.Count}):");
-            foreach (var log in ctx.Logs.Where(l => l.Level is "ERROR").Take(10))
-                sb.AppendLine($"- [{log.Timestamp:HH:mm:ss}] {log.Message[..Math.Min(200, log.Message.Length)]}");
+            sb.AppendLine($"## LOGS RELEVANTES ({Math.Min(ctx.Logs.Count, 12)} de {ctx.Logs.Count}):");
+            foreach (var log in ctx.Logs.Take(12))
+                sb.AppendLine($"- [{log.Timestamp:HH:mm:ss}] {log.Level}: {log.Message[..Math.Min(220, log.Message.Length)]}");
             sb.AppendLine();
         }
 
@@ -120,47 +122,57 @@ public sealed class OllamaAiService(
             sb.AppendLine("## TIMELINE:");
             foreach (var e in ctx.Timeline.TakeLast(10))
                 sb.AppendLine($"- [{e.Timestamp:HH:mm:ss}] {e.Source}: {e.Description}");
+            sb.AppendLine();
         }
 
-        sb.AppendLine();
+        sb.AppendLine("Critério de decisão operacional:");
+        sb.AppendLine("- Ignore: ruído, resolved sem impacto, no_data isolado ou evidência insuficiente.");
+        sb.AppendLine("- Observe: warning sem evidência forte; registre mas não interrompa.");
+        sb.AppendLine("- Notify: incidente real que merece mensagem em canal leve.");
+        sb.AppendLine("- Escalate: critical, serviço down, perda de pedidos, outbox parado, fila crítica ou impacto claro ao usuário.");
+        sb.AppendLine("Use confidence entre 0 e 1. Evidence deve conter apenas fatos vindos do alerta, logs ou métricas.");
         sb.AppendLine("Responda SOMENTE com o JSON, sem explicações adicionais.");
 
         return sb.ToString();
     }
 
-    // ── Parser ────────────────────────────────────────────────────────────────
-
     private AiAnalysis ParseAiResponse(string raw, IncidentContext ctx, string model)
     {
         try
         {
-            // Extrai JSON mesmo se vier com texto ao redor
             var start = raw.IndexOf('{');
             var end   = raw.LastIndexOf('}');
             if (start < 0 || end < 0)
                 return FallbackAnalysis(ctx, model, $"JSON não encontrado na resposta: {raw[..Math.Min(100, raw.Length)]}");
 
-            var json    = raw[start..(end + 1)];
-            var doc     = JsonDocument.Parse(json);
-            var root    = doc.RootElement;
+            var json = raw[start..(end + 1)];
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
 
-            var severityStr = root.GetProperty("severity").GetString() ?? "Medium";
-            var severity    = Enum.TryParse<AiSeverity>(severityStr, true, out var s) ? s : AiSeverity.Medium;
+            var severityStr = GetString(root, "severity", "Medium");
+            var severity = Enum.TryParse<AiSeverity>(severityStr, true, out var s) ? s : AiSeverity.Medium;
 
-            var suggestions = root.TryGetProperty("suggestions", out var sugsEl)
-                ? sugsEl.EnumerateArray().Select(e => e.GetString() ?? "").ToList()
-                : [];
+            var decisionStr = GetString(root, "operational_decision", "Notify");
+            var decision = Enum.TryParse<AlertDecision>(decisionStr, true, out var d) ? d : AlertDecision.Notify;
+
+            var confidence = root.TryGetProperty("confidence", out var confidenceEl) && confidenceEl.TryGetDouble(out var c)
+                ? Math.Clamp(c, 0, 1)
+                : 0.5;
 
             return new AiAnalysis
             {
-                RootCause     = root.GetProperty("root_cause").GetString()     ?? "Desconhecido",
-                ProbableCause = root.GetProperty("probable_cause").GetString() ?? "unknown",
-                Severity      = severity,
-                HumanSummary  = root.GetProperty("human_summary").GetString()  ?? raw,
-                Suggestions   = suggestions,
-                GeneratedAt   = DateTimeOffset.UtcNow,
-                ModelUsed     = model,
-                IsReliable    = true
+                RootCause = GetString(root, "root_cause", "Desconhecido"),
+                ProbableCause = GetString(root, "probable_cause", "unknown"),
+                Severity = severity,
+                OperationalDecision = decision,
+                Confidence = confidence,
+                Impact = GetString(root, "impact", "Impacto nao estimado"),
+                Evidence = GetStringArray(root, "evidence"),
+                HumanSummary = GetString(root, "human_summary", raw),
+                Suggestions = GetStringArray(root, "suggestions"),
+                GeneratedAt = DateTimeOffset.UtcNow,
+                ModelUsed = model,
+                IsReliable = true
             };
         }
         catch (Exception ex)
@@ -170,20 +182,33 @@ public sealed class OllamaAiService(
         }
     }
 
+    private static string GetString(JsonElement root, string name, string fallback) =>
+        root.TryGetProperty(name, out var el) ? el.GetString() ?? fallback : fallback;
+
+    private static IReadOnlyList<string> GetStringArray(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var el) && el.ValueKind == JsonValueKind.Array
+            ? el.EnumerateArray()
+                .Select(e => e.GetString() ?? "")
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToList()
+            : [];
+
     private static AiAnalysis FallbackAnalysis(IncidentContext ctx, string model, string reason) =>
         new()
         {
-            RootCause     = $"Análise AI indisponível ({reason})",
+            RootCause = $"Análise AI indisponível ({reason})",
             ProbableCause = "unknown",
-            Severity      = AiSeverity.Medium,
-            HumanSummary  = $"Incidente no serviço {ctx.Service}. Análise automática falhou — verificar manualmente.",
-            Suggestions   = ["Verificar logs no Grafana/Loki", "Checar dashboards do Prometheus"],
-            GeneratedAt   = DateTimeOffset.UtcNow,
-            ModelUsed     = model,
-            IsReliable    = false
+            Severity = AiSeverity.Medium,
+            OperationalDecision = AlertDecision.Notify,
+            Confidence = 0.2,
+            Impact = "Impacto nao estimado porque a analise AI falhou",
+            Evidence = [],
+            HumanSummary = $"Incidente no serviço {ctx.Service}. Análise automática falhou — verificar manualmente.",
+            Suggestions = ["Verificar logs no Grafana/Loki", "Checar dashboards do Prometheus"],
+            GeneratedAt = DateTimeOffset.UtcNow,
+            ModelUsed = model,
+            IsReliable = false
         };
-
-    // ── Ollama DTOs ───────────────────────────────────────────────────────────
 
     private sealed class OllamaRequest
     {

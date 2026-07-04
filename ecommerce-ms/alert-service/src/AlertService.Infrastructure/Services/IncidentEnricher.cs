@@ -25,7 +25,7 @@ public sealed class IncidentEnricher(
         var first      = payload.AlertsList.FirstOrDefault();
         var service    = ExtractService(first?.Labels);
         var firedAt    = first?.StartsAt ?? DateTimeOffset.UtcNow;
-        var incidentId = $"{service}-{firedAt:yyyyMMddHHmmss}-{Guid.NewGuid():N[..6]}";
+        var incidentId = $"{service}-{firedAt:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6]}";
 
         var context = new IncidentContext
         {

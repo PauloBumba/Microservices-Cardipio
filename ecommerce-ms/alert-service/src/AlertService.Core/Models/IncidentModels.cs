@@ -81,6 +81,10 @@ public sealed record AiAnalysis
     public required string HumanSummary     { get; init; }
     public required AiSeverity Severity     { get; init; }
     public required string ProbableCause    { get; init; }   // "deploy", "db", "overload", "network", etc
+    public AlertDecision OperationalDecision { get; init; } = AlertDecision.Notify;
+    public double Confidence { get; init; } = 0.5;
+    public string Impact { get; init; } = "Impacto ainda nao estimado";
+    public IReadOnlyList<string> Evidence { get; init; } = [];
     public IReadOnlyList<string> Suggestions { get; init; } = [];
     public required DateTimeOffset GeneratedAt { get; init; }
     public required string ModelUsed        { get; init; }
@@ -89,3 +93,4 @@ public sealed record AiAnalysis
 
 public enum AiSeverity { Low, Medium, High, Critical }
 
+public enum AlertDecision { Ignore, Observe, Notify, Escalate }

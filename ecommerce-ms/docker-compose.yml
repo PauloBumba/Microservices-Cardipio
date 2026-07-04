@@ -248,7 +248,7 @@ services:
       Channels__Email__ToAddresses: ${EMAIL_TO_ADDRESSES}
 
       # ── Feature Flags ─────────────────────────────────────────────────────
-      FeatureFlags__AiEnabled: "false"
+      FeatureFlags__AiEnabled: "true"
       FeatureFlags__LokiEnrichmentEnabled: "false"
       FeatureFlags__PrometheusEnrichmentEnabled: "false"
       FeatureFlags__McpEnrichmentEnabled: "true"

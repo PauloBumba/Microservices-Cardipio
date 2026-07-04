@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AlertService.Core.Interfaces;
 using AlertService.Core.Models;
 using AlertService.Core.Services;
@@ -6,9 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace AlertService.Core;
 
 /// <summary>
-/// MODIFICAÇÃO ADITIVA: mantém o comportamento legacy 100% preservado.
-/// Quando AiEnabled=false: exatamente o mesmo fluxo de antes.
-/// Quando AiEnabled=true: enriquece → notifica com contexto.
+/// Mantem o modo legacy quando enriquecimento esta desligado.
+/// Quando MCP/AI estao ligados, enriquece, classifica e aplica politica anti-ruido.
 /// </summary>
 public sealed class AlertDispatcher(
     IEnumerable<IAlertChannel> channels,
@@ -16,29 +16,42 @@ public sealed class AlertDispatcher(
     FeatureFlags flags,
     ILogger<AlertDispatcher> logger)
 {
+    private static readonly ConcurrentDictionary<string, DateTimeOffset> _lastSentByIncidentKey = new();
+    private static readonly TimeSpan DuplicateCooldown = TimeSpan.FromMinutes(15);
+
     public async Task DispatchAsync(GrafanaWebhookPayload payload, CancellationToken ct = default)
     {
         AlertNotification notification;
 
         if (flags.AiEnabled || flags.LokiEnrichmentEnabled || flags.PrometheusEnrichmentEnabled || flags.McpEnrichmentEnabled)
-        {
             notification = await DispatchEnhancedAsync(payload, ct);
-        }
         else
-        {
-            // ── MODO LEGACY: exatamente o mesmo código de antes ───────────────
             notification = BuildNotification(payload);
+
+        var selectedChannels = SelectChannels(notification).ToList();
+        if (selectedChannels.Count == 0)
+        {
+            logger.LogInformation(
+                "Alerta [{State}] '{Title}' registrado sem notificacao externa pela politica operacional",
+                notification.State, notification.Title);
+            return;
+        }
+
+        if (ShouldSuppressDuplicate(notification))
+        {
+            logger.LogInformation(
+                "Alerta duplicado suprimido por {Cooldown}min: {Title}",
+                DuplicateCooldown.TotalMinutes, notification.Title);
+            return;
         }
 
         logger.LogInformation(
             "Disparando alerta [{State}] '{Title}' para {Count} canais",
-            notification.State, notification.Title, channels.Count());
+            notification.State, notification.Title, selectedChannels.Count);
 
-        var tasks = channels.Select(ch => SendSafeAsync(ch, notification, ct));
+        var tasks = selectedChannels.Select(ch => SendSafeAsync(ch, notification, ct));
         await Task.WhenAll(tasks);
     }
-
-    // ── MODO ENHANCED ─────────────────────────────────────────────────────────
 
     private async Task<AlertNotification> DispatchEnhancedAsync(
         GrafanaWebhookPayload payload,
@@ -50,26 +63,16 @@ public sealed class AlertDispatcher(
         {
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(flags.EnrichmentTimeout);
-
             context = await enricher.EnrichAsync(payload, timeoutCts.Token);
         }
         catch (Exception ex)
         {
-            // Falha no enriquecimento NÃO bloqueia a notificação
             logger.LogError(ex, "Pipeline de enriquecimento falhou — caindo para modo legacy");
         }
 
-        if (context is null)
-            return BuildNotification(payload);
-
-        return BuildEnrichedNotification(payload, context);
+        return context is null ? BuildNotification(payload) : BuildEnrichedNotification(payload, context);
     }
 
-    // ── Builders ──────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// IDÊNTICO ao BuildNotification original — não toque.
-    /// </summary>
     private static AlertNotification BuildNotification(GrafanaWebhookPayload payload)
     {
         var alerts = payload.AlertsList;
@@ -148,49 +151,49 @@ public sealed class AlertDispatcher(
             }
         }
 
-        var body = string.Join("\n", bodyLines);
-
         return new AlertNotification(
             Title: title,
-            Body: body,
+            Body: string.Join("\n", bodyLines),
             Severity: severity,
             State: state,
             FiredAt: first?.StartsAt ?? DateTimeOffset.UtcNow);
     }
 
-    /// <summary>
-    /// Versão enriquecida: inclui RCA, timeline e anomalias no body.
-    /// </summary>
     private static AlertNotification BuildEnrichedNotification(
         GrafanaWebhookPayload payload,
         IncidentContext context)
     {
-        // Reutiliza o builder legacy para o bloco base
         var legacy = BuildNotification(payload);
-
         var bodyLines = new List<string> { legacy.Body };
 
         if (context.EnrichmentSource is "mcp")
             bodyLines.Add("\n🔗 Enriquecido via MCP (Grafana/Loki/Prometheus)");
 
-        // ── Seção AI ─────────────────────────────────────────────────────────
         if (context.AiAnalysis is { } ai)
         {
-            bodyLines.Add("\n🧠 *ANÁLISE DE ROOT CAUSE (AI)*");
+            bodyLines.Add("\n🧠 *ANÁLISE DE INCIDENTE (AI)*");
+            bodyLines.Add($"Decisão operacional: {ai.OperationalDecision} (confiança {ai.Confidence:P0})");
             bodyLines.Add($"Causa raiz: {ai.RootCause}");
             bodyLines.Add($"Provável origem: {ai.ProbableCause}");
             bodyLines.Add($"Severidade AI: {ai.Severity}");
+            bodyLines.Add($"Impacto: {ai.Impact}");
             bodyLines.Add($"Resumo: {ai.HumanSummary}");
+
+            if (ai.Evidence.Count > 0)
+            {
+                bodyLines.Add("Evidências:");
+                foreach (var evidence in ai.Evidence.Take(4))
+                    bodyLines.Add($"  • {evidence}");
+            }
 
             if (ai.Suggestions.Count > 0)
             {
                 bodyLines.Add("Ações sugeridas:");
-                foreach (var s in ai.Suggestions)
-                    bodyLines.Add($"  • {s}");
+                foreach (var suggestion in ai.Suggestions.Take(5))
+                    bodyLines.Add($"  • {suggestion}");
             }
         }
 
-        // ── Anomalias ─────────────────────────────────────────────────────────
         if (context.Anomalies.Count > 0)
         {
             bodyLines.Add("\n📊 *ANOMALIAS DETECTADAS*");
@@ -198,7 +201,6 @@ public sealed class AlertDispatcher(
                 bodyLines.Add($"  ⚠ {anomaly.Description}");
         }
 
-        // ── Timeline (top 5 eventos) ──────────────────────────────────────────
         if (context.Timeline.Count > 0)
         {
             bodyLines.Add("\n📅 *TIMELINE*");
@@ -206,7 +208,6 @@ public sealed class AlertDispatcher(
                 bodyLines.Add($"  [{evt.Timestamp:HH:mm:ss}] {evt.Source.ToUpperInvariant()}: {evt.Description}");
         }
 
-        // ── Logs de erro (top 3) ──────────────────────────────────────────────
         var errorLogs = context.Logs
             .Where(l => l.Level is "ERROR")
             .TakeLast(3)
@@ -228,6 +229,38 @@ public sealed class AlertDispatcher(
             State: legacy.State,
             FiredAt: legacy.FiredAt,
             IncidentContext: context);
+    }
+
+    private IEnumerable<IAlertChannel> SelectChannels(AlertNotification notification)
+    {
+        var decision = notification.IncidentContext?.AiAnalysis?.OperationalDecision
+            ?? (notification.Severity is AlertSeverity.Critical ? AlertDecision.Escalate : AlertDecision.Notify);
+
+        if (decision is AlertDecision.Ignore or AlertDecision.Observe)
+            return [];
+
+        if (notification.State == "resolved" && notification.Severity is not AlertSeverity.Critical)
+            return [];
+
+        return decision is AlertDecision.Escalate || notification.Severity is AlertSeverity.Critical
+            ? channels
+            : channels.Where(ch => !string.Equals(ch.Name, "Email", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool ShouldSuppressDuplicate(AlertNotification notification)
+    {
+        if (notification.State == "resolved") return false;
+
+        var service = notification.IncidentContext?.Service ?? "unknown";
+        var decision = notification.IncidentContext?.AiAnalysis?.OperationalDecision.ToString() ?? "legacy";
+        var key = $"{service}|{notification.Title}|{notification.Severity}|{decision}".ToLowerInvariant();
+        var now = DateTimeOffset.UtcNow;
+
+        if (_lastSentByIncidentKey.TryGetValue(key, out var last) && now - last < DuplicateCooldown)
+            return true;
+
+        _lastSentByIncidentKey[key] = now;
+        return false;
     }
 
     private async Task SendSafeAsync(
