@@ -3,7 +3,8 @@
 #  Uso: make <target>
 # ════════════════════════════════════════════════════════════════════════════
 
-.PHONY: help up down restart build logs ps \
+.PHONY: help validate up up-infra up-apps down down-v restart restart-svc \
+        build build-apps build-no-cache rebuild rebuild-apps rebuild-order recreate logs logs-apps logs-svc ps \
         migrate migrate-customer migrate-product migrate-order migrate-notification \
         migrate-rollback seed \
         test test-unit test-integration test-api test-watch \
@@ -21,6 +22,12 @@ K6              := k6
 KUBECTL         := kubectl
 NAMESPACE       := ecommerce
 RESULTS_DIR     := k6/results
+SVC             ?= order-service
+
+APP_SERVICES    := customer-service product-service order-service notification-service
+INFRA_SERVICES  := customers-db products-db orders-db notifications-db redis rabbitmq
+OBS_SERVICES    := jaeger prometheus grafana loki promtail rabbitmq-exporter redis-exporter postgres-exporter-customers postgres-exporter-orders
+AI_SERVICES     := ollama-service mcp-grafana alert-service evolution-db evolution-api
 
 CUSTOMER_URL    ?= http://localhost:5001
 PRODUCT_URL     ?= http://localhost:5002
@@ -41,13 +48,23 @@ help:
 	@echo "$(BOLD)$(CYAN)╚══════════════════════════════════════════════╝$(NC)"
 	@echo ""
 	@echo "$(BOLD)── AMBIENTE ──────────────────────────────────────$(NC)"
-	@echo "  $(GREEN)make up$(NC)               Sobe toda a infraestrutura"
+	@echo "  $(GREEN)make validate$(NC)         Valida docker-compose.yml"
+	@echo "  $(GREEN)make up$(NC)               Sobe toda a stack"
+	@echo "  $(GREEN)make up-infra$(NC)         Sobe bancos, Redis e RabbitMQ"
+	@echo "  $(GREEN)make up-apps$(NC)          Sobe microserviços principais"
 	@echo "  $(GREEN)make down$(NC)             Derruba tudo (preserva volumes)"
 	@echo "  $(GREEN)make down-v$(NC)           Derruba tudo + apaga volumes"
-	@echo "  $(GREEN)make restart$(NC)          Reinicia todos os serviços"
+	@echo "  $(GREEN)make restart$(NC)          Reinicia microserviços principais"
+	@echo "  $(GREEN)make restart-svc SVC=xxx$(NC) Reinicia um serviço"
 	@echo "  $(GREEN)make build$(NC)            Builda todas as imagens"
+	@echo "  $(GREEN)make build-apps$(NC)       Builda microserviços principais"
+	@echo "  $(GREEN)make build-no-cache$(NC)   Rebuilda imagens sem cache"
+	@echo "  $(GREEN)make rebuild SVC=xxx$(NC)  Rebuilda e recria um serviço sem cache"
+	@echo "  $(GREEN)make rebuild-apps$(NC)     Rebuilda apps sem cache"
+	@echo "  $(GREEN)make rebuild-order$(NC)    Atalho para Order sem cache"
+	@echo "  $(GREEN)make recreate SVC=xxx$(NC) Recria um container sem rebuild"
 	@echo "  $(GREEN)make ps$(NC)               Status dos containers"
-	@echo "  $(GREEN)make logs$(NC)             Logs de todos os serviços"
+	@echo "  $(GREEN)make logs$(NC)             Logs dos microserviços"
 	@echo "  $(GREEN)make logs-svc SVC=xxx$(NC) Logs de um serviço específico"
 	@echo ""
 	@echo "$(BOLD)── BANCO DE DADOS ────────────────────────────────$(NC)"
@@ -104,6 +121,11 @@ help:
 # AMBIENTE
 # ════════════════════════════════════════════════════════════════════════════
 
+## validate: Valida o docker-compose.yml
+validate:
+	$(COMPOSE) config --quiet
+	@echo "$(GREEN)✔ docker-compose.yml OK$(NC)"
+
 ## up: Sobe toda a infraestrutura e serviços
 up:
 	@echo "$(CYAN)▶ Subindo infraestrutura...$(NC)"
@@ -111,6 +133,14 @@ up:
 	@echo "$(CYAN)▶ Aguardando healthchecks...$(NC)"
 	@sleep 5
 	@$(MAKE) health-all
+
+## up-infra: Sobe apenas bancos, Redis e RabbitMQ
+up-infra:
+	$(COMPOSE) up -d $(INFRA_SERVICES)
+
+## up-apps: Sobe apenas microserviços principais
+up-apps:
+	$(COMPOSE) up -d $(APP_SERVICES)
 
 ## down: Derruba containers preservando volumes
 down:
@@ -123,11 +153,41 @@ down-v:
 
 ## restart: Reinicia os microserviços (sem recriar infra)
 restart:
-	$(COMPOSE) restart customer-service product-service order-service notification-service
+	$(COMPOSE) restart $(APP_SERVICES)
+
+## restart-svc SVC=order-service: Reinicia um serviço específico
+restart-svc:
+	$(COMPOSE) restart $(SVC)
 
 ## build: Builda todas as imagens
 build:
 	$(COMPOSE) build --parallel
+
+## build-apps: Builda apenas microserviços principais
+build-apps:
+	$(COMPOSE) build --parallel $(APP_SERVICES)
+
+## build-no-cache: Rebuilda todas as imagens sem cache
+build-no-cache:
+	$(COMPOSE) build --no-cache --pull
+
+## rebuild SVC=order-service: Rebuilda e recria um serviço sem cache
+rebuild:
+	$(COMPOSE) build --no-cache --pull $(SVC)
+	$(COMPOSE) up -d --force-recreate $(SVC)
+
+## rebuild-apps: Rebuilda e recria microserviços principais sem cache
+rebuild-apps:
+	$(COMPOSE) build --no-cache --pull $(APP_SERVICES)
+	$(COMPOSE) up -d --force-recreate $(APP_SERVICES)
+
+## rebuild-order: Rebuilda e recria o Order Service sem cache
+rebuild-order:
+	@$(MAKE) rebuild SVC=order-service
+
+## recreate SVC=order-service: Recria um container sem rebuild
+recreate:
+	$(COMPOSE) up -d --force-recreate $(SVC)
 
 ## ps: Status dos containers
 ps:
@@ -135,7 +195,11 @@ ps:
 
 ## logs: Logs de todos os serviços
 logs:
-	$(COMPOSE) logs -f customer-service product-service order-service notification-service
+	$(COMPOSE) logs -f $(APP_SERVICES)
+
+## logs-apps: Logs dos microserviços principais
+logs-apps:
+	$(COMPOSE) logs -f $(APP_SERVICES)
 
 ## logs-svc SVC=xxx: Logs de um serviço específico
 logs-svc:
