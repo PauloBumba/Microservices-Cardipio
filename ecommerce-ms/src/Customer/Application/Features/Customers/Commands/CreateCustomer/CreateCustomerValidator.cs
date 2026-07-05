@@ -7,8 +7,17 @@ public sealed class CreateCustomerValidator : AbstractValidator<CreateCustomerCo
     public CreateCustomerValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
-        RuleFor(x => x.Phone).NotEmpty();
+
+        RuleFor(x => x.Email)
+            .NotEmpty()
+            .EmailAddress(FluentValidation.Validators.EmailValidationMode.Net4xRegex)
+            .WithMessage("Email inválido.");
+
+        RuleFor(x => x.Phone)
+            .NotEmpty()
+            .Matches(@"^\+?[0-9]{10,15}$")
+            .WithMessage("Telefone inválido.");
+
         RuleFor(x => x.Street).NotEmpty();
         RuleFor(x => x.City).NotEmpty();
         RuleFor(x => x.State).NotEmpty();

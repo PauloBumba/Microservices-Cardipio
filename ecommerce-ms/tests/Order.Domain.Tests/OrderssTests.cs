@@ -68,7 +68,7 @@ public class OrdersTests
 
         var act = () => order.AddItem(Guid.NewGuid(), "X", "S", 1, 10m, "BRL");
 
-        act.Should().Throw<OrderDomainException>().WithMessage("*pendentes*");
+        act.Should().Throw<OrderDomainException>().WithMessage("*pendente*");
     }
 
     // ── Confirm ──────────────────────────────────────────────────────────────
