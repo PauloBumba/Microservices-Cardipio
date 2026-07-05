@@ -19,7 +19,7 @@ public static class DependencyInjection
         services.AddDbContext<CustomerDbContext>(opt =>
             opt.UseNpgsql(cfg.GetConnectionString("DefaultConnection"),
                 npgsql => npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
-
+        
         // ── UoW (TransactionBehavior usa esta interface) ───────────────────
         services.AddScoped<IUnitOfWorkAccessor>(sp => sp.GetRequiredService<CustomerDbContext>());
 

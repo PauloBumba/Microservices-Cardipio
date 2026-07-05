@@ -21,7 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWorkAccessor>(sp => sp.GetRequiredService<OrderDbContext>());
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddHostedService<OrderOutboxProcessor>();
-
+        
         var redis = cfg.GetConnectionString("Redis");
         if (!string.IsNullOrEmpty(redis))
             services.AddStackExchangeRedisCache(o => o.Configuration = redis);

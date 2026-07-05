@@ -1,0 +1,57 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+metadata:
+  name: ecommerce-ms
+build:
+  artifacts:
+    - image: ecommerce/customer-service
+      context: .
+      docker:
+        dockerfile: src/Customer/Api/Dockerfile
+    - image: ecommerce/product-service
+      context: .
+      docker:
+        dockerfile: src/Product/Api/Dockerfile
+    - image: ecommerce/order-service
+      context: .
+      docker:
+        dockerfile: src/Order/Api/Dockerfile
+    - image: ecommerce/notification-service
+      context: .
+      docker:
+        dockerfile: src/Notification/Api/Dockerfile
+  local:
+    push: false
+    concurrency: 0
+manifests:
+  rawYaml:
+    - k8s/namespace.yaml
+    - k8s/infra.yaml
+    - k8s/secrets/*.yaml
+    - k8s/configmaps/*.yaml
+    - k8s/deployments/*.yaml
+    - k8s/hpa/*.yaml
+    - k8s/ingress/*.yaml
+deploy:
+  kubectl: {}
+portForward:
+  - resourceType: service
+    resourceName: customer-service
+    namespace: ecommerce
+    port: 8080
+    localPort: 5001
+  - resourceType: service
+    resourceName: product-service
+    namespace: ecommerce
+    port: 8080
+    localPort: 5002
+  - resourceType: service
+    resourceName: order-service
+    namespace: ecommerce
+    port: 8080
+    localPort: 5003
+  - resourceType: service
+    resourceName: notification-service
+    namespace: ecommerce
+    port: 8080
+    localPort: 5004

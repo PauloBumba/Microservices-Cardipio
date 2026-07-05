@@ -1,0 +1,85 @@
+name: K8s Integration (kind)
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch: {}
+
+jobs:
+  kind-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Nenhum docker/login-action aqui de propósito:
+      # as imagens ficam só dentro do cluster kind efêmero deste runner,
+      # nunca saem pra uma registry externa. Login só entraria se um job
+      # separado de "release" fosse fazer push pro Docker Hub/GHCR.
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: ecommerce
+          config: ecommerce-ms/k8s/kind-config.yaml
+
+      - name: Install ingress-nginx
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+          kubectl wait --namespace ingress-nginx \
+            --for=condition=ready pod \
+            --selector=app.kubernetes.io/component=controller \
+            --timeout=120s
+
+      - name: Build service images
+        working-directory: ecommerce-ms
+        run: |
+          docker build -f src/Customer/Api/Dockerfile     -t ecommerce/customer-service:ci     .
+          docker build -f src/Product/Api/Dockerfile      -t ecommerce/product-service:ci      .
+          docker build -f src/Order/Api/Dockerfile        -t ecommerce/order-service:ci        .
+          docker build -f src/Notification/Api/Dockerfile -t ecommerce/notification-service:ci .
+
+      - name: Load images into kind
+        run: |
+          kind load docker-image ecommerce/customer-service:ci     --name ecommerce
+          kind load docker-image ecommerce/product-service:ci      --name ecommerce
+          kind load docker-image ecommerce/order-service:ci        --name ecommerce
+          kind load docker-image ecommerce/notification-service:ci --name ecommerce
+
+      - name: Apply manifests
+        working-directory: ecommerce-ms
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/infra.yaml
+          kubectl wait --for=condition=ready pod -l app=rabbitmq -n ecommerce --timeout=120s
+          kubectl wait --for=condition=ready pod -l app=redis    -n ecommerce --timeout=120s
+          kubectl apply -f k8s/secrets/
+          kubectl apply -f k8s/configmaps/
+          # troca a tag "latest" dos manifests pela imagem buildada nesse CI
+          sed -i 's/:latest/:ci/' k8s/deployments/*.yaml
+          kubectl apply -f k8s/deployments/
+          kubectl apply -f k8s/hpa/
+          kubectl apply -f k8s/ingress/
+
+      - name: Wait for rollout
+        working-directory: ecommerce-ms
+        run: |
+          kubectl wait --for=condition=available deployment -l app -n ecommerce --timeout=180s
+
+      - name: Run API tests
+        working-directory: ecommerce-ms
+        run: bash run-tests.sh k8s
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          kubectl get pods -n ecommerce
+          kubectl describe pods -n ecommerce
+          for svc in customer-service product-service order-service notification-service; do
+            echo "── logs: $svc ──"
+            kubectl logs -n ecommerce -l app=$svc --tail=200 || true
+          done
+
+      - name: Delete cluster
+        if: always()
+        run: kind delete cluster --name ecommerce

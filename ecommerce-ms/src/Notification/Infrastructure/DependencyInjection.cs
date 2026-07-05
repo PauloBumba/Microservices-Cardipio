@@ -14,7 +14,7 @@ public static class DependencyInjection
         services.AddDbContext<NotificationDbContext>(opt => opt.UseNpgsql(cfg.GetConnectionString("DefaultConnection")));
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<NotificationDbContext>());
-
+       
         services.AddMassTransit(x =>
         {
             x.SetKebabCaseEndpointNameFormatter();
