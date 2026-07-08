@@ -16,6 +16,7 @@ public sealed class IncidentMcpTools(
     IMcpObservabilityClient mcpClient,
     IIncidentAiService aiService,
     IRecentIncidentStore incidentStore,
+    IPromptTemplateStore promptStore,
     FeatureFlags flags,
     ILogger<IncidentMcpTools> logger)
 {
@@ -117,6 +118,26 @@ public sealed class IncidentMcpTools(
         return ok
             ? "MCP Grafana OK — grafana/mcp-grafana acessível."
             : "MCP Grafana indisponível — verifique o container mcp-grafana.";
+    }
+
+    [McpServerTool, Description("Retorna o template de prompt atual usado para analisar incidentes com o LLM.")]
+    public async Task<string> GetPromptTemplate(CancellationToken cancellationToken = default) =>
+        await promptStore.GetTemplateAsync(cancellationToken);
+
+    [McpServerTool, Description("Define um novo template de prompt para análise de incidentes via LLM. Use com cuidado — substitui o atual.")]
+    public async Task<string> SetPromptTemplate(
+        [Description("Novo texto de instrução para o LLM (substitui o template atual)")] string template,
+        CancellationToken cancellationToken = default)
+    {
+        await promptStore.SetTemplateAsync(template, cancellationToken);
+        return "Prompt template atualizado com sucesso.";
+    }
+
+    [McpServerTool, Description("Restaura o template de prompt padrão de fábrica.")]
+    public async Task<string> ResetPromptTemplate(CancellationToken cancellationToken = default)
+    {
+        await promptStore.ResetToDefaultAsync(cancellationToken);
+        return "Prompt template restaurado ao padrão.";
     }
 
     private static string Truncate(string s, int max) =>

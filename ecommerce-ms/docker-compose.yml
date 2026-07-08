@@ -210,6 +210,16 @@ services:
       grafana: { condition: service_healthy }
     restart: unless-stopped
 
+  # ─── Grafana Tempo (Tracing) ───────────────────────────────────────────────────
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./docker/tempo/tempo.yaml:/etc/tempo.yaml
+    ports: ["3200:3200", "4318:4318"]
+    restart: unless-stopped
+
   # ─── Alert Service / Incident Gateway ─────────────────────────────────────────
   alert-service:
     build:
@@ -253,10 +263,13 @@ services:
       FeatureFlags__PrometheusEnrichmentEnabled: "false"
       FeatureFlags__McpEnrichmentEnabled: "true"
       FeatureFlags__McpServerEnabled: "true"
-      FeatureFlags__EnrichmentTimeoutSeconds: "20"
+      FeatureFlags__EnrichmentTimeoutSeconds: "60"
+
+      # ── OpenTelemetry ─────────────────────────────────────────────────────
+      OpenTelemetry__OtlpEndpoint: http://tempo:4318
 
       # ── MCP (grafana/mcp-grafana) ─────────────────────────────────────────
-      Mcp__GrafanaMcpBaseUrl: http://mcp-grafana:8000
+      Mcp__GrafanaMcpBaseUrl: http://mcp-grafana:8000/mcp
       Mcp__LokiDatasourceUid: loki
       Mcp__PrometheusDatasourceUid: prometheus
       Mcp__TimeoutSec: "15"
@@ -268,7 +281,7 @@ services:
       Enrichment__Prometheus__BaseUrl: http://prometheus:9090
       Enrichment__Prometheus__TimeoutSec: "8"
       Enrichment__Ollama__BaseUrl: http://ollama-service:11434
-      Enrichment__Ollama__Model: llama3.2:3b
+      Enrichment__Ollama__Model: llama3.2:1b
       Enrichment__Ollama__TimeoutSec: "25"
 
     ports: ["5005:8080"]

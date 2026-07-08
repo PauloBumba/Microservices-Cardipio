@@ -53,6 +53,10 @@ public static class DependencyInjection
         });
         services.AddSingleton<IPrometheusClient, PrometheusClient>();
 
+        // ── Prompt template (editável manualmente / via MCP) ───────────────────
+        services.Configure<PromptTemplateStoreOptions>(configuration.GetSection("PromptTemplateStore"));
+        services.AddSingleton<IPromptTemplateStore, FilePromptTemplateStore>();
+
         // ── Ollama AI ─────────────────────────────────────────────────────────
         services.Configure<OllamaOptions>(configuration.GetSection("Enrichment:Ollama"));
         services.AddHttpClient<OllamaAiService>(client =>

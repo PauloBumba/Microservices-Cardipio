@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -19,16 +20,25 @@ public sealed class OllamaOptions
 public sealed class OllamaAiService(
     HttpClient                 http,
     IOptions<OllamaOptions>    options,
+    IPromptTemplateStore       promptStore,
     ILogger<OllamaAiService>   logger) : IIncidentAiService
 {
     private static readonly JsonSerializerOptions _jsonOpts = new()
     {
         PropertyNameCaseInsensitive = true
     };
+    private static readonly ActivitySource _activitySource = new("AlertService.AI");
 
     public async Task<AiAnalysis> AnalyzeAsync(IncidentContext context, CancellationToken ct = default)
     {
-        var prompt = BuildPrompt(context);
+        var instructions = await promptStore.GetTemplateAsync(ct);
+        var prompt = BuildPrompt(context, instructions);
+
+        using var activity = _activitySource.StartActivity("llm.generate", ActivityKind.Client);
+        activity?.SetTag("gen_ai.system", "ollama");
+        activity?.SetTag("gen_ai.operation.name", "chat");
+        activity?.SetTag("gen_ai.request.model", options.Value.Model);
+        activity?.SetTag("gen_ai.input.messages", JsonSerializer.Serialize(new[] { new { role = "user", content = prompt } }));
 
         var request = new OllamaRequest
         {
@@ -46,39 +56,46 @@ public sealed class OllamaAiService(
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeoutCts.CancelAfter(TimeSpan.FromSeconds(options.Value.TimeoutSec));
 
-        var httpResponse = await http.PostAsync(
-            $"{options.Value.BaseUrl}/api/generate",
-            content,
-            timeoutCts.Token);
+        try
+        {
+            var httpResponse = await http.PostAsync(
+                $"{options.Value.BaseUrl}/api/generate",
+                content,
+                timeoutCts.Token);
 
-        httpResponse.EnsureSuccessStatusCode();
+            httpResponse.EnsureSuccessStatusCode();
 
-        var raw = await httpResponse.Content.ReadFromJsonAsync<OllamaResponse>(_jsonOpts, timeoutCts.Token);
-        if (raw?.Response is null)
-            return FallbackAnalysis(context, options.Value.Model, reason: "resposta vazia do Ollama");
+            var raw = await httpResponse.Content.ReadFromJsonAsync<OllamaResponse>(_jsonOpts, timeoutCts.Token);
+            if (raw?.Response is null)
+            {
+                activity?.SetTag("gen_ai.response.finish_reasons", "error");
+                activity?.SetStatus(ActivityStatusCode.Error, "resposta vazia do Ollama");
+                return FallbackAnalysis(context, options.Value.Model, reason: "resposta vazia do Ollama");
+            }
 
-        return ParseAiResponse(raw.Response, context, options.Value.Model);
+            activity?.SetTag("gen_ai.response.model", raw.Model ?? options.Value.Model);
+            activity?.SetTag("gen_ai.output.messages", JsonSerializer.Serialize(new[] { new { role = "assistant", content = raw.Response } }));
+            activity?.SetTag("gen_ai.response.finish_reasons", "stop");
+            activity?.SetTag("gen_ai.usage.prompt_tokens", raw.PromptEvalCount);
+            activity?.SetTag("gen_ai.usage.completion_tokens", raw.EvalCount);
+            activity?.SetTag("gen_ai.usage.total_tokens", raw.PromptEvalCount + raw.EvalCount);
+
+            return ParseAiResponse(raw.Response, context, options.Value.Model);
+        }
+        catch (Exception ex)
+        {
+            activity?.SetTag("gen_ai.response.finish_reasons", "error");
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            logger.LogError(ex, "Erro ao chamar Ollama");
+            return FallbackAnalysis(context, options.Value.Model, reason: ex.Message);
+        }
     }
 
-    private static string BuildPrompt(IncidentContext ctx)
+    private static string BuildPrompt(IncidentContext ctx, string instructions)
     {
         var sb = new StringBuilder();
 
-        sb.AppendLine("Você é um SRE especialista em aplicações distribuídas. Analise o incidente abaixo e responda APENAS em JSON válido.");
-        sb.AppendLine("Formato obrigatório:");
-        sb.AppendLine("""
-        {
-          "root_cause": "descrição técnica da causa raiz",
-          "probable_cause": "deploy | database | overload | network | memory_leak | external_dependency | configuration | unknown",
-          "severity": "Low | Medium | High | Critical",
-          "operational_decision": "Ignore | Observe | Notify | Escalate",
-          "confidence": 0.0,
-          "impact": "impacto provável para usuário/sistema, máximo 1 frase",
-          "evidence": ["evidência objetiva 1", "evidência objetiva 2"],
-          "human_summary": "resumo em português para o time, máximo 2 frases",
-          "suggestions": ["ação 1", "ação 2", "ação 3"]
-        }
-        """);
+        sb.AppendLine(instructions.Trim());
         sb.AppendLine();
 
         sb.AppendLine($"# INCIDENTE: {ctx.OriginalPayload.Title}");
@@ -223,8 +240,11 @@ public sealed class OllamaAiService(
         [JsonPropertyName("temperature")] public float Temperature { get; set; }
     }
 
-    private sealed class OllamaResponse
-    {
-        [JsonPropertyName("response")] public string? Response { get; set; }
-    }
+   private sealed class OllamaResponse
+{
+    [JsonPropertyName("model")]             public string? Model           { get; set; }
+    [JsonPropertyName("response")]          public string? Response        { get; set; }
+    [JsonPropertyName("prompt_eval_count")] public int?    PromptEvalCount { get; set; }
+    [JsonPropertyName("eval_count")]        public int?    EvalCount       { get; set; }
+}
 }

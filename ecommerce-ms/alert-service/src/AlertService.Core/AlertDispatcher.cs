@@ -233,16 +233,20 @@ public sealed class AlertDispatcher(
 
     private IEnumerable<IAlertChannel> SelectChannels(AlertNotification notification)
     {
-        var decision = notification.IncidentContext?.AiAnalysis?.OperationalDecision
+        // Quando existe análise de IA, ela manda sozinha — não fica sujeita a
+        // ser sobrescrita pela severidade crua do label do Grafana (isso causava
+        // envio de email mesmo quando a IA concluía que não era caso de escalar).
+        var aiDecision = notification.IncidentContext?.AiAnalysis?.OperationalDecision;
+        var decision = aiDecision
             ?? (notification.Severity is AlertSeverity.Critical ? AlertDecision.Escalate : AlertDecision.Notify);
 
         if (decision is AlertDecision.Ignore or AlertDecision.Observe)
             return [];
 
-        if (notification.State == "resolved" && notification.Severity is not AlertSeverity.Critical)
+        if (notification.State == "resolved" && decision is not AlertDecision.Escalate)
             return [];
 
-        return decision is AlertDecision.Escalate || notification.Severity is AlertSeverity.Critical
+        return decision is AlertDecision.Escalate
             ? channels
             : channels.Where(ch => !string.Equals(ch.Name, "Email", StringComparison.OrdinalIgnoreCase));
     }

@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "alert-service": {
+      "url": "http://localhost:5005/mcp"
+    }
+  }
+}

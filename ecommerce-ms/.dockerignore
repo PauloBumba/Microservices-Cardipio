@@ -22,3 +22,22 @@
 # Temp
 **/tmp/
 **/.tmp/
+# Visual Studio
+.vs/
+
+# Build
+bin/
+obj/
+
+# Logs
+*.log
+
+# Arquivos temporários e zip
+*.zip
+*.txt
+*.cache
+
+# Segredos locais - nunca versionar credenciais reais
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/.env
