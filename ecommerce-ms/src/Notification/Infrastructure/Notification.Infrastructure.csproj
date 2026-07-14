@@ -5,8 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4" PrivateAssets="all" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../Reference/Notification.Reference.csproj" />
     <ProjectReference Include="../Domain/Notification.Domain.csproj" />
     <ProjectReference Include="../Application/Notification.Application.csproj" />
+   
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -8,4 +8,7 @@
     <ProjectReference Include="../Reference/Notification.Reference.csproj" />
     <ProjectReference Include="../Domain/Notification.Domain.csproj" />
   </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\Shared\IntegrationEvents\Shared.IntegrationEvents.csproj" />
+	</ItemGroup>
 </Project>

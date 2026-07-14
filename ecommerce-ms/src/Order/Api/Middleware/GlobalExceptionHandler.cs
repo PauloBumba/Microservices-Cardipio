@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Order.Domain.Exceptions;
 using Polly.CircuitBreaker;
 namespace Order.Api.Middleware;
-internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, TimeProvider timeProvider) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext ctx, Exception ex, CancellationToken ct)
     {
@@ -20,7 +20,7 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
         };
         var p = new ProblemDetails { Status=status, Title=title, Detail=detail, Instance=ctx.Request.Path };
         p.Extensions["traceId"] = ctx.TraceIdentifier;
-        p.Extensions["timestamp"] = DateTime.UtcNow;
+        p.Extensions["timestamp"] = timeProvider.GetUtcNow().UtcDateTime;
         ctx.Response.StatusCode = status;
         await ctx.Response.WriteAsJsonAsync(p, ct);
         return true;

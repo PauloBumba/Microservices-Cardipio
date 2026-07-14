@@ -20,22 +20,25 @@ public sealed class Orders : AggregateRoot
     public DateTime UpdatedAt { get; private set; }
     public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
-    public static Orders Create(Guid customerId)
+    public static Orders Create(Guid customerId, TimeProvider? timeProvider = null)
     {
+        var provider = timeProvider ?? TimeProvider.System;
+        var now = provider.GetUtcNow().UtcDateTime;
+
         var order = new Orders
         {
             Id = Guid.NewGuid(),
-            OrderNumber = GenerateOrderNumber(),
+            OrderNumber = GenerateOrderNumber(provider),
             CustomerId = customerId,
             Status = OrderStatus.Pending,
             Total = 0,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            UpdatedAt = now
         };
         return order;
     }
 
-    public void AddItem(Guid productId, string productName, string sku, int qty, decimal unitPrice, string currency)
+    public void AddItem(Guid productId, string productName, string sku, int qty, decimal unitPrice, string currency, TimeProvider? timeProvider = null)
     {
         if (Status != OrderStatus.Pending) throw new OrderDomainException("Não é possível adicionar itens a um pedido não pendente.");
         if (qty <= 0) throw new OrderDomainException("Quantidade deve ser positiva.");
@@ -44,26 +47,26 @@ public sealed class Orders : AggregateRoot
         _items.Add(new OrderItem(Guid.NewGuid(), productId, productName, sku, qty, unitPrice));
         Total = _items.Sum(i => i.Subtotal);
         Currency = currency;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = (timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
     }
 
-    public void Cancel(string reason)
+    public void Cancel(string reason, TimeProvider? timeProvider = null)
     {
         if (Status == OrderStatus.Cancelled) throw new OrderDomainException("Pedido já cancelado.");
         Status = OrderStatus.Cancelled;
-        UpdatedAt = DateTime.UtcNow;
-        Raise(new OrderCancelledDomainEvent(Id, OrderNumber, CustomerId, reason));
+        UpdatedAt = (timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
+        Raise(new OrderCancelledDomainEvent(Id, OrderNumber, CustomerId, reason, timeProvider));
     }
 
-    public void Confirm()
+    public void Confirm(TimeProvider? timeProvider = null)
     {
         if (Status != OrderStatus.Pending) throw new OrderDomainException("Apenas pedidos pendentes podem ser confirmados.");
         if (_items.Count == 0) throw new OrderDomainException("Pedido sem itens não pode ser confirmado.");
         Status = OrderStatus.Confirmed;
-        UpdatedAt = DateTime.UtcNow;
-        Raise(new OrderConfirmedDomainEvent(Id, OrderNumber));
+        UpdatedAt = (timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
+        Raise(new OrderConfirmedDomainEvent(Id, OrderNumber, timeProvider));
     }
 
-    private static string GenerateOrderNumber() =>
-        $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpperInvariant()}";
+    private static string GenerateOrderNumber(TimeProvider? timeProvider = null) =>
+        $"ORD-{(timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpperInvariant()}";
 }

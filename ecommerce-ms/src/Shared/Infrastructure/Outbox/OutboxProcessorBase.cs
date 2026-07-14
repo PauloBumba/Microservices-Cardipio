@@ -1,4 +1,4 @@
-using MediatR;
+using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -40,7 +40,7 @@ public abstract class OutboxProcessorBase(
     private async Task ProcessBatchAsync(CancellationToken ct)
     {
         await using var scope = services.CreateAsyncScope();
-        var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+        var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
         var messages = await GetPendingAsync(scope.ServiceProvider, BatchSize, ct);
         if (messages.Count == 0) return;
@@ -70,7 +70,9 @@ public abstract class OutboxProcessorBase(
                 }
 
                 var payload = JsonSerializer.Deserialize(msg.Payload, type)!;
-                await publisher.Publish(payload, ct);
+                
+                // Publicar via MassTransit/RabbitMQ
+                await publishEndpoint.Publish(payload, type, ct);
 
                 await MarkProcessedAsync(scope.ServiceProvider, msg, ct);
                 await RecordProcessedEventAsync(scope.ServiceProvider, msg.Id, msg.Type, ct);

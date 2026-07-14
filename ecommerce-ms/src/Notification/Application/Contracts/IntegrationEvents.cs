@@ -1,3 +1,5 @@
+using Shared.IntegrationEvents;
+
 namespace Notification.Application.Contracts;
 
 /// Contrato local do OrderCreatedDomainEvent publicado pelo Order Service.
@@ -11,5 +13,5 @@ public sealed record OrderCreatedIntegrationEvent(
 
 public sealed record OrderItemLine(Guid ProductId, string Sku, int Quantity, decimal UnitPrice);
 
+// Usar o evento compartilhado do Shared
 
-public sealed record CustomerCreatedIntegrationEvent(Guid CustomerId, string Name, string Email);

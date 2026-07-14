@@ -8,9 +8,11 @@ using OutboxMessage = Shared.Infrastructure.Outbox.OutboxMessage;
 
 namespace Customer.Infrastructure.Outbox;
 
-public sealed class CustomerOutboxProcessor(IServiceProvider services, ILogger<CustomerOutboxProcessor> logger)
+public sealed class CustomerOutboxProcessor(IServiceProvider services, ILogger<CustomerOutboxProcessor> logger, TimeProvider timeProvider)
     : OutboxProcessorBase(services, logger)
 {
+    private readonly TimeProvider _timeProvider = timeProvider;
+
     protected override async Task<List<OutboxMessage>> GetPendingAsync(IServiceProvider sp, int batchSize, CancellationToken ct)
     {
         var db = sp.GetRequiredService<CustomerDbContext>();
@@ -27,7 +29,7 @@ public sealed class CustomerOutboxProcessor(IServiceProvider services, ILogger<C
         var entity = await db.OutboxMessages.FindAsync([msg.Id], ct);
         if (entity is not null)
         {
-            entity.ProcessedAt = DateTime.UtcNow;
+            entity.ProcessedAt = _timeProvider.GetUtcNow().UtcDateTime;
             entity.Status = OutboxMessageStatus.Processed;
             entity.IsProcessing = false;
             await db.SaveChangesAsync(ct);
@@ -52,7 +54,7 @@ public sealed class CustomerOutboxProcessor(IServiceProvider services, ILogger<C
         var msg = await db.OutboxMessages.FindAsync([messageId], ct);
         if (msg is null || msg.IsProcessing) return false;
         msg.IsProcessing = true;
-        msg.LockedAt = DateTime.UtcNow;
+        msg.LockedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(ct);
         return true;
     }
@@ -69,7 +71,12 @@ public sealed class CustomerOutboxProcessor(IServiceProvider services, ILogger<C
         // ON CONFLICT DO NOTHING via tentativa de inserção
         try
         {
-            db.ProcessedEvents.Add(new CustomerProcessedEvent { EventId = eventId, EventType = type });
+            db.ProcessedEvents.Add(new CustomerProcessedEvent 
+            { 
+                EventId = eventId, 
+                EventType = type,
+                ProcessedAt = _timeProvider.GetUtcNow().UtcDateTime
+            });
             await db.SaveChangesAsync(ct);
         }
         catch (DbUpdateException) { /* já existia — idempotência garantida */ }

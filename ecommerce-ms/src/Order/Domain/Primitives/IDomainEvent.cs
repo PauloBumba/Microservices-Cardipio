@@ -1,3 +1,2 @@
+global using SharedIDomainEvent = Shared.Domain.Primitives.IDomainEvent;
 
-namespace Order.Domain.Primitives;
-public interface IDomainEvent { }

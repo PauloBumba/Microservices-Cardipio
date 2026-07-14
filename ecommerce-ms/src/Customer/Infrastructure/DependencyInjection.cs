@@ -1,4 +1,3 @@
-using Customer.Application.Behaviors;
 using Customer.Application.Repositories;
 using Customer.Infrastructure.Outbox;
 using Customer.Infrastructure.Persistence;

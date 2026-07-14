@@ -14,12 +14,12 @@ public sealed class NotificationS
     public DateTime CreatedAt { get; private set; }
     public DateTime? SentAt { get; private set; }
 
-    public static NotificationS Create(string type, string recipient, string channel, string subject, string body)
+    public static NotificationS Create(string type, string recipient, string channel, string subject, string body, TimeProvider? timeProvider = null)
         => new() { Id=Guid.NewGuid(), Type=type, Recipient=recipient, Channel=channel,
-                   Subject=subject, Body=body, Status=NotificationStatus.Pending, CreatedAt=DateTime.UtcNow };
+                   Subject=subject, Body=body, Status=NotificationStatus.Pending, CreatedAt=(timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime };
 
-    public void MarkSent() { Status=NotificationStatus.Sent; SentAt=DateTime.UtcNow; }
-    public void MarkFailed(string error)
+    public void MarkSent(TimeProvider? timeProvider = null) { Status=NotificationStatus.Sent; SentAt=(timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime; }
+    public void MarkFailed(string error, TimeProvider? timeProvider = null)
     {
         RetryCount++; Error=error;
         Status = RetryCount >= 3 ? NotificationStatus.DeadLetter : NotificationStatus.Failed;

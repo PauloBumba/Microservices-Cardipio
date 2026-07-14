@@ -8,28 +8,31 @@ namespace Order.Domain.Events
         Guid CustomerId,
         decimal Total,
         string Currency,
-        List<OrderItemSnapshot> Items) : IDomainEvent
+        List<OrderItemSnapshot> Items,
+        TimeProvider? timeProvider = null) : IDomainEvent
     {
         public Guid EventId { get; } = Guid.NewGuid();
-        public DateTime OccurredAt { get; } = DateTime.UtcNow;
+        public DateTime OccurredAt { get; } = (timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
     }
 
     public sealed record OrderConfirmedDomainEvent(
         Guid OrderId,
-        string OrderNumber) : IDomainEvent
+        string OrderNumber,
+        TimeProvider? timeProvider = null) : IDomainEvent
     {
         public Guid EventId { get; } = Guid.NewGuid();
-        public DateTime OccurredAt { get; } = DateTime.UtcNow;
+        public DateTime OccurredAt { get; } = (timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
     }
 
     public sealed record OrderCancelledDomainEvent(
         Guid OrderId,
         string OrderNumber,
         Guid CustomerId,
-        string Reason) : IDomainEvent
+        string Reason,
+        TimeProvider? timeProvider = null) : IDomainEvent
     {
         public Guid EventId { get; } = Guid.NewGuid();
-        public DateTime OccurredAt { get; } = DateTime.UtcNow;
+        public DateTime OccurredAt { get; } = (timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
     }
 
     public sealed record OrderItemSnapshot(

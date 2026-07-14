@@ -1,3 +1,3 @@
 
-namespace Product.Domain.Primitives;
-public interface IDomainEvent  { }
+global using SharedIDomainEvent = Shared.Domain.Primitives.IDomainEvent;
+

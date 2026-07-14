@@ -19,7 +19,7 @@ public sealed class TransactionBehavior<TRequest, TResponse>(
         logger.LogDebug("[TX] Iniciando {Request}", typeof(TRequest).Name);
         var response = await next();
 
-        if (response is IApiResponseMarker { IsSuccess: false })
+        if (response is IApiResponseMarker apiResponse && apiResponse.IsSuccess == false)
         {
             logger.LogDebug("[TX] Resposta com falha — commit cancelado para {Request}", typeof(TRequest).Name);
             return response;
@@ -30,6 +30,3 @@ public sealed class TransactionBehavior<TRequest, TResponse>(
         return response;
     }
 }
-
-// Marker interface para inspeção genérica do IsSuccess
-public interface IApiResponseMarker { bool IsSuccess { get; } }

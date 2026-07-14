@@ -28,7 +28,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
         }
 
         var response = await next();
-        var expiry = cq.Expiry ?? DefaultExpiry;
+        var expiry = cq.CacheDuration ?? DefaultExpiry;
         await cache.SetStringAsync(key, JsonSerializer.Serialize(response),
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = expiry }, ct);
         logger.LogDebug("[Cache] SET {Key} (expiry {Expiry})", key, expiry);

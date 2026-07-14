@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.Extensions.Logging;
 using Notification.Application.Contracts;
 using Notification.Domain.Repositories;
+using Shared.IntegrationEvents;
 namespace Notification.Infrastructure.Messaging.Consumers;
 public sealed class CustomerCreatedConsumer(
     INotificationRepository repo, IUnitOfWork uow,

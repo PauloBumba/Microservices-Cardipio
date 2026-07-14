@@ -8,5 +8,5 @@ namespace Product.Application.Features.Products.Queries.GetProductById;
 public sealed record GetProductByIdQuery(Guid Id) : IRequest<ApiResponse<ProductDto>>, ICacheableQuery
 {
     public string CacheKey => $"products:{Id}";
-    public TimeSpan? Expiry => TimeSpan.FromMinutes(10);
+    public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
 }

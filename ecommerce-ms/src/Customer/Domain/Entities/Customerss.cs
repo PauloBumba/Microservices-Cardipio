@@ -18,9 +18,13 @@ public sealed class Customerss : AggregateRoot
     public DateTime UpdatedAt { get; private set; }
 
     public static Customerss Create(string name, string email, string phone,
-        string street, string city, string state, string zipCode, string country)
+        string street, string city, string state, string zipCode, string country,
+        TimeProvider? timeProvider = null)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new CustomerDomainException("Nome obrigatório.");
+
+        var provider = timeProvider ?? TimeProvider.System;
+        var now = provider.GetUtcNow().UtcDateTime;
 
         var c = new Customerss
         {
@@ -30,29 +34,30 @@ public sealed class Customerss : AggregateRoot
             Phone = Phone.Create(phone),
             Address = Address.Create(street, city, state, zipCode, country),
             IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            UpdatedAt = now
         };
-        c.Raise(new CustomerCreatedDomainEvent(c.Id, c.Name, c.Email.Value));
+        c.Raise(new CustomerCreatedDomainEvent(c.Id, c.Name, c.Email.Value, provider));
         return c;
     }
 
     public void Update(string name, string phone,
-        string street, string city, string state, string zipCode, string country)
+        string street, string city, string state, string zipCode, string country,
+        TimeProvider? timeProvider = null)
     {
         if (!IsActive) throw new CustomerDomainException("Cliente inativo não pode ser atualizado.");
         Name = name.Trim();
         Phone = Phone.Create(phone);
         Address = Address.Create(street, city, state, zipCode, country);
-        UpdatedAt = DateTime.UtcNow;
-        Raise(new CustomerUpdatedDomainEvent(Id, Name));
+        UpdatedAt = (timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
+        Raise(new CustomerUpdatedDomainEvent(Id, Name, timeProvider));
     }
 
-    public void Deactivate()
+    public void Deactivate(TimeProvider? timeProvider = null)
     {
         if (!IsActive) throw new CustomerDomainException("Cliente já inativo.");
         IsActive = false;
-        UpdatedAt = DateTime.UtcNow;
-        Raise(new CustomerDeactivatedDomainEvent(Id));
+        UpdatedAt = (timeProvider ?? TimeProvider.System).GetUtcNow().UtcDateTime;
+        Raise(new CustomerDeactivatedDomainEvent(Id, timeProvider));
     }
 }

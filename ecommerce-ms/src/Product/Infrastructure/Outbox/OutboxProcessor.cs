@@ -6,8 +6,10 @@ using Microsoft.Extensions.Logging;
 using Product.Infrastructure.Persistence;
 using System.Text.Json;
 namespace Product.Infrastructure.Outbox;
-public sealed class OutboxProcessor(IServiceProvider services, ILogger<OutboxProcessor> logger) : BackgroundService
+public sealed class OutboxProcessor(IServiceProvider services, ILogger<OutboxProcessor> logger, TimeProvider timeProvider) : BackgroundService
 {
+    private readonly TimeProvider _timeProvider = timeProvider;
+
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         logger.LogInformation("Product OutboxProcessor started.");
@@ -31,7 +33,7 @@ public sealed class OutboxProcessor(IServiceProvider services, ILogger<OutboxPro
             {
                 var type = Type.GetType(msg.Type)!;
                 await bus.Publish(JsonSerializer.Deserialize(msg.Payload, type)!, type, ct);
-                msg.ProcessedAt = DateTime.UtcNow;
+                msg.ProcessedAt = _timeProvider.GetUtcNow().UtcDateTime;
             }
             catch (Exception ex) { msg.RetryCount++; msg.Error = ex.Message; }
         }

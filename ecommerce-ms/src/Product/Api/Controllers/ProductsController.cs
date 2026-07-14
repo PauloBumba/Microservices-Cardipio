@@ -48,8 +48,9 @@ public sealed class ProductsController(ISender sender) : ControllerBase
     [ProducesResponseType(409)]
     public async Task<IActionResult> ReserveStock(Guid id, [FromBody] QuantityRequest req, CancellationToken ct=default)
     {
-        var ok = await sender.Send(new ReserveStockCommand(id, req.Quantity), ct);
-        return ok ? Ok(new { reserved=true }) : Conflict(new { reserved=false, message="Estoque insuficiente." });
+        var result = await sender.Send(new ReserveStockCommand(id, req.Quantity), ct);
+        if (!result.IsSuccess) return Conflict(new { reserved=false, message=result.Errors.FirstOrDefault() ?? "Estoque insuficiente." });
+        return Ok(new { reserved=true });
     }
 }
 public sealed record QuantityRequest(int Quantity);

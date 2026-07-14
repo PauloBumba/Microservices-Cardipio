@@ -8,5 +8,15 @@ public class ProcessedEvent
 {
     public Guid EventId { get; init; }
     public string EventType { get; init; } = null!;
-    public DateTime ProcessedAt { get; init; } = DateTime.UtcNow;
+    public DateTime ProcessedAt { get; init; }
+
+    public static ProcessedEvent Create(Guid eventId, string eventType, TimeProvider timeProvider)
+    {
+        return new ProcessedEvent
+        {
+            EventId = eventId,
+            EventType = eventType,
+            ProcessedAt = timeProvider.GetUtcNow().UtcDateTime
+        };
+    }
 }

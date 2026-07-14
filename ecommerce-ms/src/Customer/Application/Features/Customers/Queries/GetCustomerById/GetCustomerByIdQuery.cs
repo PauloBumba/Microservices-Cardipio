@@ -9,5 +9,5 @@ public sealed record GetCustomerByIdQuery(Guid Id)
     : IRequest<ApiResponse<CustomerDto>>, ICacheableQuery
 {
     public string CacheKey => $"customers:{Id}";
-    public TimeSpan? Expiry => TimeSpan.FromMinutes(10);
+    public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
 }

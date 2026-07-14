@@ -1,14 +1,32 @@
+using System.Text.Json.Serialization;
+
 namespace Shared.Application.Response;
+
+/// <summary>
+/// Marker interface para inspeção genérica do IsSuccess
+/// </summary>
+public interface IApiResponseMarker
+{
+    bool IsSuccess { get; }
+}
 
 /// <summary>
 /// Envelope de resposta padronizado — nunca lance exceção para erros de negócio,
 /// use ApiResponse.Fail() em vez disso.
 /// </summary>
-public sealed class ApiResponse<T>
+public sealed class ApiResponse<T> : IApiResponseMarker
 {
     public bool IsSuccess { get; private init; }
     public T? Data { get; private init; }
     public IReadOnlyList<string> Errors { get; private init; } = [];
+
+    [JsonConstructor]
+    private ApiResponse(bool isSuccess, T? data, IReadOnlyList<string>? errors)
+    {
+        IsSuccess = isSuccess;
+        Data = data;
+        Errors = errors ?? [];
+    }
 
     private ApiResponse() { }
 

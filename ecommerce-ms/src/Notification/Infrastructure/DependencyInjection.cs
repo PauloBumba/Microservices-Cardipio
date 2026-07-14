@@ -20,6 +20,7 @@ public static class DependencyInjection
             x.SetKebabCaseEndpointNameFormatter();
             x.AddConsumer<OrderCreatedConsumer>();
             x.AddConsumer<CustomerCreatedConsumer>();
+            x.AddConsumer<ProductCreatedConsumer>();
 
             x.UsingRabbitMq((ctx, c) =>
             {
@@ -38,6 +39,13 @@ public static class DependencyInjection
                     e.ConfigureConsumer<CustomerCreatedConsumer>(ctx);
                     e.UseMessageRetry(r => r.Intervals(1000, 5000, 30_000));
                     e.BindDeadLetterQueue("notification-customer-created-dlq");
+                });
+
+                c.ReceiveEndpoint("notification-product-created", e =>
+                {
+                    e.ConfigureConsumer<ProductCreatedConsumer>(ctx);
+                    e.UseMessageRetry(r => r.Intervals(1000, 5000, 30_000));
+                    e.BindDeadLetterQueue("notification-product-created-dlq");
                 });
             });
         });

@@ -7,5 +7,5 @@ namespace Shared.Application.Caching;
 public interface ICacheableQuery
 {
     string CacheKey { get; }
-    TimeSpan? Expiry => null; // null = usa o padrão (5 min)
+    TimeSpan? CacheDuration => null; // null = usa o padrão (5 min)
 }

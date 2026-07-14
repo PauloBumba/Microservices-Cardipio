@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Notification.Domain.Repositories;
 namespace Notification.Infrastructure.Persistence;
-public sealed class NotificationDbContext(DbContextOptions<NotificationDbContext> options)
+public sealed class NotificationDbContext(DbContextOptions<NotificationDbContext> options, TimeProvider timeProvider)
     : DbContext(options), IUnitOfWork
 {
+    private readonly TimeProvider _timeProvider = timeProvider;
+
     public DbSet<Domain.Entities.NotificationS> Notifications => Set<Domain.Entities.NotificationS>();
     protected override void OnModelCreating(ModelBuilder mb)
     {

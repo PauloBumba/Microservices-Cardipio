@@ -16,5 +16,6 @@
     <ProjectReference Include="..\Domain\Product.Domain.csproj" />
     <ProjectReference Include="..\Application\Product.Application.csproj" />
     <ProjectReference Include="..\..\Shared\Infrastructure\Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\IntegrationEvents\Shared.IntegrationEvents.csproj" />
   </ItemGroup>
 </Project>

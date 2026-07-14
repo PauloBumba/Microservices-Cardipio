@@ -33,7 +33,7 @@ namespace Infrastructure.DesignTime
                 b => b.MigrationsAssembly(typeof(CustomerDbContext).Assembly.FullName)
             );
 
-            return new CustomerDbContext(builder.Options);
+            return new CustomerDbContext(builder.Options, TimeProvider.System);
         }
     }
 }

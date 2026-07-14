@@ -8,9 +8,11 @@ using OutboxMessage = Shared.Infrastructure.Outbox.OutboxMessage;
 
 namespace Order.Infrastructure.Outbox;
 
-public sealed class OrderOutboxProcessor(IServiceProvider services, ILogger<OrderOutboxProcessor> logger)
+public sealed class OrderOutboxProcessor(IServiceProvider services, ILogger<OrderOutboxProcessor> logger, TimeProvider timeProvider)
     : OutboxProcessorBase(services, logger)
 {
+    private readonly TimeProvider _timeProvider = timeProvider;
+
     protected override async Task<List<OutboxMessage>> GetPendingAsync(IServiceProvider sp, int batchSize, CancellationToken ct) =>
         await sp.GetRequiredService<OrderDbContext>().OutboxMessages
             .Where(m => m.Status == OutboxMessageStatus.Pending && !m.IsProcessing)
@@ -22,7 +24,7 @@ public sealed class OrderOutboxProcessor(IServiceProvider services, ILogger<Orde
         var entity = await db.OutboxMessages.FindAsync([msg.Id], ct);
         if (entity is not null)
         {
-            entity.ProcessedAt = DateTime.UtcNow;
+            entity.ProcessedAt = _timeProvider.GetUtcNow().UtcDateTime;
             entity.Status = OutboxMessageStatus.Processed;
             entity.IsProcessing = false;
             await db.SaveChangesAsync(ct);
@@ -46,7 +48,7 @@ public sealed class OrderOutboxProcessor(IServiceProvider services, ILogger<Orde
         var db = sp.GetRequiredService<OrderDbContext>();
         var msg = await db.OutboxMessages.FindAsync([messageId], ct);
         if (msg is null || msg.IsProcessing) return false;
-        msg.IsProcessing = true; msg.LockedAt = DateTime.UtcNow;
+        msg.IsProcessing = true; msg.LockedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(ct); return true;
     }
 
@@ -56,7 +58,15 @@ public sealed class OrderOutboxProcessor(IServiceProvider services, ILogger<Orde
     protected override async Task RecordProcessedEventAsync(IServiceProvider sp, Guid eventId, string type, CancellationToken ct)
     {
         var db = sp.GetRequiredService<OrderDbContext>();
-        try { db.ProcessedEvents.Add(new OrderProcessedEvent { EventId = eventId, EventType = type }); await db.SaveChangesAsync(ct); }
+        try { 
+            db.ProcessedEvents.Add(new OrderProcessedEvent 
+            { 
+                EventId = eventId, 
+                EventType = type,
+                ProcessedAt = _timeProvider.GetUtcNow().UtcDateTime
+            }); 
+            await db.SaveChangesAsync(ct); 
+        }
         catch (DbUpdateException) { }
     }
 }
