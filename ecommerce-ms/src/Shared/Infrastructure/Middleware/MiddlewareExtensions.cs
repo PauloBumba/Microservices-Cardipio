@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Builder;
+
 namespace Shared.Infrastructure.Middleware;
 
 public static class MiddlewareExtensions

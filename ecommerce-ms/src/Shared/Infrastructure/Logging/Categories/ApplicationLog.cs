@@ -3,11 +3,11 @@ namespace Shared.Infrastructure.Logging.Categories;
 public class ApplicationLog
 {
     public string Category => "Application";
-    public string Level { get; set; }
-    public string Message { get; set; }
-    public string Service { get; set; }
-    public string Environment { get; set; }
-    public string TimestampUtc { get; set; }
+    public string Level { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string Service { get; set; } = string.Empty;
+    public string Environment { get; set; } = string.Empty;
+    public string TimestampUtc { get; set; } = string.Empty;
     public string? TraceId { get; set; }
     public string? SpanId { get; set; }
     public string? CorrelationId { get; set; }

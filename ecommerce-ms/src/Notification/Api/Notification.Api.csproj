@@ -10,5 +10,6 @@
     <ProjectReference Include="../Reference/Notification.Reference.csproj" />
     <ProjectReference Include="../Application/Notification.Application.csproj" />
     <ProjectReference Include="../Infrastructure/Notification.Infrastructure.csproj" />
+    <ProjectReference Include="../../Shared/Infrastructure/Shared.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

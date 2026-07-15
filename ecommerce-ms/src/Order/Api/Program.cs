@@ -32,12 +32,12 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "postgres")
     .AddRabbitMQ($"amqp://{builder.Configuration["RabbitMQ:Username"]}:{builder.Configuration["RabbitMQ:Password"]}@{builder.Configuration["RabbitMQ:Host"]}", name: "rabbitmq")
     .AddUrlGroup(new Uri(builder.Configuration["ProductService:BaseUrl"]!), name: "product-service");
-    
 
-app.UseCorrelationId();
 var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
     await scope.ServiceProvider.GetRequiredService<OrderDbContext>().Database.MigrateAsync();
+
+app.UseCorrelationId();
 app.UseExceptionHandler();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Order API v1"));

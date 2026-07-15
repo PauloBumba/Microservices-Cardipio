@@ -38,14 +38,12 @@ public static class SerilogConfiguration
                   formatter: new JsonFormatter(),
                   path: Path.Combine(logPath, "Application", "application-.log"),
                   rollingInterval: RollingInterval.Day,
-                  retainedFileCountLimit: 30,
-                  outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"))
+                  retainedFileCountLimit: 30))
               .WriteTo.Async(a => a.File(
                   formatter: new JsonFormatter(),
                   path: Path.Combine(logPath, "Audit", "audit-.log"),
                   rollingInterval: RollingInterval.Day,
-                  retainedFileCountLimit: 365, // 1 ano para compliance
-                  outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"))
+                  retainedFileCountLimit: 365))
               .WriteTo.Async(a => a.File(
                   formatter: new JsonFormatter(),
                   path: Path.Combine(logPath, "Security", "security-.log"),
@@ -61,11 +59,12 @@ public static class SerilogConfiguration
             var lokiUrl = ctx.Configuration["Loki:Url"];
             if (!string.IsNullOrEmpty(lokiUrl))
             {
-                lc.WriteTo.GrafanaLoki(lokiUrl, labels: new[]
-                {
-                    new Serilog.Sinks.Grafana.Loki.LokiLabel { Key = "service", Value = ctx.HostingEnvironment.ApplicationName },
-                    new Serilog.Sinks.Grafana.Loki.LokiLabel { Key = "environment", Value = ctx.HostingEnvironment.EnvironmentName }
-                });
+                // TODO: Verificar sintaxe correta para Serilog.Sinks.Grafana.Loki
+                // lc.WriteTo.GrafanaLoki(lokiUrl, labels: new[]
+                // {
+                //     new Serilog.Sinks.Grafana.Loki.LokiLabel { Key = "service", Value = ctx.HostingEnvironment.ApplicationName },
+                //     new Serilog.Sinks.Grafana.Loki.LokiLabel { Key = "environment", Value = ctx.HostingEnvironment.EnvironmentName }
+                // });
             }
         });
     }

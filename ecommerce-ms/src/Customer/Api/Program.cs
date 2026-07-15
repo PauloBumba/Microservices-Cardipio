@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
+using Shared.Infrastructure.Logging;
+using Shared.Infrastructure.Middleware;
 using Serilog;
 var builder = WebApplication.CreateBuilder(args);
-builder.Host.UseSerilog((ctx, lc) => lc
-    .ReadFrom.Configuration(ctx.Configuration)
-    .Enrich.FromLogContext().Enrich.WithMachineName()
-    .Enrich.WithProperty("Service", "customer-service").WriteTo.Console());
+
+// Configurar Serilog
+SerilogConfiguration.ConfigureSerilog(builder);
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddControllers();
@@ -54,7 +56,5 @@ app.MapGet("/", (TimeProvider timeProvider) => Results.Ok(new
     Health = "/health",
     Metrics = "/metrics",
     Timestamp = timeProvider.GetUtcNow().UtcDateTime
-}));
-app.Run();
 }));
 app.Run();

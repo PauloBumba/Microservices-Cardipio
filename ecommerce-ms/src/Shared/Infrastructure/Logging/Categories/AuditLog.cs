@@ -4,14 +4,14 @@ public class AuditLog
 {
     public string Category => "Audit";
     public Guid Id { get; set; }
-    public string TimestampUtc { get; set; }
-    public string Service { get; set; }
-    public string Environment { get; set; }
-    public string UserId { get; set; }
-    public string UserName { get; set; }
-    public string Action { get; set; }
-    public string Resource { get; set; }
-    public string ResourceId { get; set; }
+    public string TimestampUtc { get; set; } = string.Empty;
+    public string Service { get; set; } = string.Empty;
+    public string Environment { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public string Resource { get; set; } = string.Empty;
+    public string ResourceId { get; set; } = string.Empty;
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
     public bool Success { get; set; }

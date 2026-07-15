@@ -25,7 +25,7 @@ public sealed class ObservabilityBehavior<TRequest, TResponse>(
         if (activity != null)
         {
             activity.SetTag("mediatr.request", requestName);
-            activity.SetTag("mediatr.type", typeof(TRequest).IsAssignableTo(typeof(IBaseCommand)) ? "Command" : "Query");
+            activity.SetTag("mediatr.type", requestName.EndsWith("Command") ? "Command" : "Query");
         }
 
         var stopwatch = Stopwatch.StartNew();

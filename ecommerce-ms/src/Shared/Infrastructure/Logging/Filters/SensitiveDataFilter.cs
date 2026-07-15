@@ -24,8 +24,7 @@ public class SensitiveDataFilter : ILogEventFilter
             var key = property.Key.ToLower();
             if (SensitiveKeys.Any(s => key.Contains(s)))
             {
-                logEvent.AddOrUpdateProperty(property.Key, 
-                    new ScalarValue("***REDACTED***"));
+                logEvent.AddOrUpdateProperty(new LogEventProperty(property.Key, new ScalarValue("***REDACTED***")));
             }
         }
     }

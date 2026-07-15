@@ -1,4 +1,5 @@
 using Serilog;
+using Serilog.Context;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -8,7 +9,8 @@ public class CorrelationIdEnricher : ILogEventEnricher
 {
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
-        if (LogContext.TryGet("CorrelationId", out var correlationId))
+        // LogContext não tem TryGet, então vamos tentar obter da propriedade se já existir
+        if (logEvent.Properties.TryGetValue("CorrelationId", out var correlationId))
         {
             logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("CorrelationId", correlationId));
         }
