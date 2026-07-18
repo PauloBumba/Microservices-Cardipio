@@ -7,10 +7,9 @@ using Product.Infrastructure;
 using Product.Infrastructure.Persistence;
 using Prometheus;
 using Serilog;
+using Shared.Infrastructure.Logging;
 var builder = WebApplication.CreateBuilder(args);
-builder.Host.UseSerilog((ctx, lc) => lc
-    .ReadFrom.Configuration(ctx.Configuration)
-    .Enrich.FromLogContext().Enrich.WithProperty("Service", "product-service").WriteTo.Console());
+SerilogConfiguration.ConfigureSerilog(builder);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddControllers();

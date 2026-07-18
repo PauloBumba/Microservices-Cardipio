@@ -12,6 +12,8 @@ using Order.Infrastructure.Repositories;
 using Polly;
 using Polly.Extensions.Http;
 using Shared.Application.Behaviors;
+using Shared.Infrastructure.Logging.Repositories;
+using Shared.Infrastructure.Logging.Services;
 
 namespace Order.Infrastructure;
 
@@ -25,6 +27,9 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWorkAccessor>(sp => sp.GetRequiredService<OrderDbContext>());
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<Shared.Application.Auditing.IAuditRepository>(sp => new EfAuditRepository(sp.GetRequiredService<OrderDbContext>()));
+        services.AddScoped<Shared.Application.Auditing.IAuditLogger, AuditLogger>();
         services.AddHostedService<OrderOutboxProcessor>();
         
         var redis = cfg.GetConnectionString("Redis");

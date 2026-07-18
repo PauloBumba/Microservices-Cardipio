@@ -1,10 +1,26 @@
 using Microsoft.Extensions.Logging;
 using Shared.Infrastructure.Logging.Categories;
+using Shared.Application.Auditing;
 
 namespace Shared.Infrastructure.Logging.Services;
 
-public class AuditLogger(ILogger<AuditLogger> logger) : IAuditLogger
+public class AuditLogger(ILogger<AuditLogger> logger) : IAuditLogger, Shared.Application.Auditing.IAuditLogger
 {
+    public Task LogAsync(AuditEntry entry, CancellationToken ct = default)
+    {
+        using (Serilog.Context.LogContext.PushProperty("Category", "Audit"))
+        using (Serilog.Context.LogContext.PushProperty("UserId", entry.UserId))
+        using (Serilog.Context.LogContext.PushProperty("Action", entry.Action))
+        using (Serilog.Context.LogContext.PushProperty("Resource", entry.Resource))
+        {
+            logger.LogInformation(
+                "Audit: {Action} on {Resource} (ID: {ResourceId}) by {UserName} - Success: {Success}",
+                entry.Action, entry.Resource, entry.ResourceId, entry.UserName, entry.Success);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public async Task LogAsync(AuditLog auditLog, CancellationToken ct = default)
     {
         using (Serilog.Context.LogContext.PushProperty("Category", "Audit"))

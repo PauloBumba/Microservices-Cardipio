@@ -7,6 +7,8 @@ using Product.Infrastructure.Outbox;
 using Product.Infrastructure.Persistence;
 using Product.Infrastructure.Repositories;
 using Shared.Application.Behaviors;
+using Shared.Infrastructure.Logging.Repositories;
+using Shared.Infrastructure.Logging.Services;
 
 namespace Product.Infrastructure;
 
@@ -20,6 +22,9 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWorkAccessor>(sp => sp.GetRequiredService<ProductDbContext>());
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<Shared.Application.Auditing.IAuditRepository>(sp => new EfAuditRepository(sp.GetRequiredService<ProductDbContext>()));
+        services.AddScoped<Shared.Application.Auditing.IAuditLogger, AuditLogger>();
         services.AddHostedService<ProductOutboxProcessor>();
 
         var redis = cfg.GetConnectionString("Redis");

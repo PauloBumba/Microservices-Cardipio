@@ -4,6 +4,7 @@ using Customer.Infrastructure.Idempotency;
 using Microsoft.EntityFrameworkCore;
 using Shared.Application.Behaviors;
 using Shared.Infrastructure.Outbox;
+using Shared.Infrastructure.Logging.Repositories;
 using Shared.IntegrationEvents;
 using System.Linq;
 
@@ -24,6 +25,7 @@ public class CustomerDbContext(DbContextOptions<CustomerDbContext> options, Time
     protected override void OnModelCreating(ModelBuilder mb)
     {
         mb.ApplyConfigurationsFromAssembly(typeof(CustomerDbContext).Assembly);
+        mb.ConfigureAuditEntries();
 
         mb.Entity<OutboxMessage>(e =>
         {

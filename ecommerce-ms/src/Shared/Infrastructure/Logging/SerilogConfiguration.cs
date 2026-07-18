@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
+using Serilog.Sinks.Grafana.Loki;
 using Shared.Infrastructure.Logging.Enrichers;
 using Shared.Infrastructure.Logging.Filters;
 
@@ -59,12 +60,11 @@ public static class SerilogConfiguration
             var lokiUrl = ctx.Configuration["Loki:Url"];
             if (!string.IsNullOrEmpty(lokiUrl))
             {
-                // TODO: Verificar sintaxe correta para Serilog.Sinks.Grafana.Loki
-                // lc.WriteTo.GrafanaLoki(lokiUrl, labels: new[]
-                // {
-                //     new Serilog.Sinks.Grafana.Loki.LokiLabel { Key = "service", Value = ctx.HostingEnvironment.ApplicationName },
-                //     new Serilog.Sinks.Grafana.Loki.LokiLabel { Key = "environment", Value = ctx.HostingEnvironment.EnvironmentName }
-                // });
+                lc.WriteTo.GrafanaLoki(lokiUrl, labels: new[]
+                {
+                    new Serilog.Sinks.Grafana.Loki.LokiLabel { Key = "service", Value = ctx.HostingEnvironment.ApplicationName },
+                    new Serilog.Sinks.Grafana.Loki.LokiLabel { Key = "environment", Value = ctx.HostingEnvironment.EnvironmentName }
+                });
             }
         });
     }

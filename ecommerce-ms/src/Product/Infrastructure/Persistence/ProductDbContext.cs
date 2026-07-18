@@ -4,6 +4,7 @@ using Product.Domain.Events;
 using Product.Infrastructure.Idempotency;
 using Shared.Application.Behaviors;
 using Shared.Infrastructure.Outbox;
+using Shared.Infrastructure.Logging.Repositories;
 using Shared.IntegrationEvents;
 using System.Linq;
 using System.Text.Json;
@@ -24,6 +25,7 @@ public class ProductDbContext(DbContextOptions<ProductDbContext> options, TimePr
     protected override void OnModelCreating(ModelBuilder mb)
     {
         mb.ApplyConfigurationsFromAssembly(typeof(ProductDbContext).Assembly);
+        mb.ConfigureAuditEntries();
         mb.Entity<OutboxMessage>(e => { e.ToTable("OutboxMessages"); e.HasKey(x => x.Id); e.Property(x => x.Status).HasConversion<string>(); });
         mb.Entity<ProductProcessedEvent>(e => { e.ToTable("ProcessedEvents"); e.HasKey(x => x.EventId); });
     }

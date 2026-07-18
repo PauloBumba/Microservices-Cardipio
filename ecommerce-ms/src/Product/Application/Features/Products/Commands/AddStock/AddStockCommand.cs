@@ -6,8 +6,11 @@ using Shared.Application.Response;
 namespace Product.Application.Features.Products.Commands.AddStock;
 
 public sealed record AddStockCommand(Guid ProductId, int Quantity)
-    : IRequest<ApiResponse<bool>>, IBaseCommand, ICacheInvalidator
+    : IRequest<ApiResponse<bool>>, IBaseCommand, ICacheInvalidator, IAuditableCommand
 {
+    public string AuditAction => "AddStock";
+    public string AuditResource => "Product";
+    public string? AuditResourceId => ProductId.ToString();
     public IEnumerable<string> CacheKeysToInvalidate =>
         ["products:all", $"products:{ProductId}"];
 }

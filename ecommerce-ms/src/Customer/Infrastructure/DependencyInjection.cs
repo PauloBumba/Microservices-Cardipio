@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Application.Behaviors;
+using Shared.Infrastructure.Logging.Repositories;
+using Shared.Infrastructure.Logging.Services;
 
 namespace Customer.Infrastructure;
 
@@ -24,6 +26,9 @@ public static class DependencyInjection
 
         // ── Repositórios ──────────────────────────────────────────────────
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<Shared.Application.Auditing.IAuditRepository>(sp => new EfAuditRepository(sp.GetRequiredService<CustomerDbContext>()));
+        services.AddScoped<Shared.Application.Auditing.IAuditLogger, AuditLogger>();
 
         // ── Outbox Processor melhorado ────────────────────────────────────
         services.AddHostedService<CustomerOutboxProcessor>();

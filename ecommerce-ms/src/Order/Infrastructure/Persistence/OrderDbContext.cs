@@ -3,6 +3,7 @@ using Order.Domain.Entities;
 using Order.Infrastructure.Idempotency;
 using Shared.Application.Behaviors;
 using Shared.Infrastructure.Outbox;
+using Shared.Infrastructure.Logging.Repositories;
 using System.Text.Json;
 
 namespace Order.Infrastructure.Persistence;
@@ -21,6 +22,7 @@ public class OrderDbContext(DbContextOptions<OrderDbContext> options, TimeProvid
     protected override void OnModelCreating(ModelBuilder mb)
     {
         mb.ApplyConfigurationsFromAssembly(typeof(OrderDbContext).Assembly);
+        mb.ConfigureAuditEntries();
         mb.Entity<OutboxMessage>(e => { e.ToTable("OutboxMessages"); e.HasKey(x => x.Id); e.Property(x => x.Status).HasConversion<string>(); });
         mb.Entity<OrderProcessedEvent>(e => { e.ToTable("ProcessedEvents"); e.HasKey(x => x.EventId); });
     }

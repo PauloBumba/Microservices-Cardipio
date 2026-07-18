@@ -1,12 +1,12 @@
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Shared.Application.Auditing;
+using System.Diagnostics;
+using System.Security.Claims;
 
 namespace Shared.Application.Behaviors;
 
-/// <summary>
-/// Interface para comandos que devem ser auditados.
-/// Implemente em Commands que requerem rastreamento de auditoria.
-/// </summary>
 public interface IAuditableCommand
 {
     string AuditAction { get; }
@@ -14,55 +14,61 @@ public interface IAuditableCommand
     string? AuditResourceId { get; }
 }
 
-/// <summary>
-/// Placeholder para AuditBehavior.
-/// 
-/// TODO: Implementar persistência de auditoria quando necessário.
-/// 
-/// Estrutura preparada para:
-/// - Registro de ações sensíveis (criação, atualização, exclusão)
-/// - Captura de userId, timestamp, IP address
-/// - Armazenamento em tabela dedicada de auditoria
-/// - Integração com serviço de auditoria centralizado
-/// - Exportação para compliance (SOX, ISO 27001, LGPD)
-/// 
-/// Fluxo futuro:
-/// 1. Extrair informações do comando e contexto HTTP
-/// 2. Criar registro de auditoria com todos os metadados
-/// 3. Persistir em banco de dados dedicado
-/// 4. Enviar para serviço de auditoria centralizado (opcional)
-/// 
-/// IMPORTANTE: Atualmente não implementa persistência.
-/// Quando necessário, implementar com IAuditRepository e tabela dedicada.
-/// </summary>
+/// <summary>Persiste o evento localmente e o encaminha para o log centralizado.</summary>
 public sealed class AuditBehavior<TRequest, TResponse>(
-    ILogger<AuditBehavior<TRequest, TResponse>> logger)
-    : IPipelineBehavior<TRequest, TResponse>
+    IAuditRepository auditRepository,
+    IAuditLogger auditLogger,
+    IHttpContextAccessor httpContextAccessor,
+    ILogger<AuditBehavior<TRequest, TResponse>> logger) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
     {
-        // TODO: Implementar persistência de auditoria quando necessário
-        // Exemplo futuro:
-        // if (request is IAuditableCommand auditable)
-        // {
-        //     var userId = _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value;
-        //     var ipAddress = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
-        //     
-        //     var auditLog = new AuditLog
-        //     {
-        //         Action = auditable.AuditAction,
-        //         Resource = auditable.AuditResource,
-        //         ResourceId = auditable.AuditResourceId,
-        //         UserId = userId,
-        //         IpAddress = ipAddress,
-        //         TimestampUtc = DateTime.UtcNow
-        //     };
-        //     
-        //     await _auditRepository.AddAsync(auditLog, ct);
-        // }
+        if (request is not IAuditableCommand command)
+            return await next();
 
-        logger.LogDebug("[Audit] Placeholder - não implementado ainda");
-        return await next();
+        try
+        {
+            var response = await next();
+            await RecordAsync(command, true, null, ct);
+            return response;
+        }
+        catch (Exception exception)
+        {
+            await RecordAsync(command, false, exception.Message, ct);
+            throw;
+        }
+    }
+
+    private async Task RecordAsync(IAuditableCommand command, bool success, string? errorMessage, CancellationToken ct)
+    {
+        var context = httpContextAccessor.HttpContext;
+        var user = context?.User;
+        var entry = new AuditEntry
+        {
+            Service = AppDomain.CurrentDomain.FriendlyName,
+            Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production",
+            UserId = user?.FindFirstValue(ClaimTypes.NameIdentifier) ?? user?.FindFirstValue("sub"),
+            UserName = user?.Identity?.Name,
+            Action = command.AuditAction,
+            Resource = command.AuditResource,
+            ResourceId = command.AuditResourceId,
+            IpAddress = context?.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = context?.Request.Headers.UserAgent.ToString(),
+            Success = success,
+            ErrorMessage = errorMessage,
+            CorrelationId = context?.TraceIdentifier,
+            TraceId = Activity.Current?.TraceId.ToString()
+        };
+
+        try
+        {
+            await auditRepository.AddAsync(entry, ct);
+            await auditLogger.LogAsync(entry, ct);
+        }
+        catch (Exception auditException)
+        {
+            logger.LogError(auditException, "Falha ao registrar auditoria de {Action} em {Resource}", entry.Action, entry.Resource);
+        }
     }
 }
